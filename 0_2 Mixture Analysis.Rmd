@@ -25,43 +25,44 @@ source(fs::path(here::here("!load_data.R")))
 ## Mixture Analysis-qgcomp
 ```{r qgcomp}
 data_scaled_analysis <- data_scaled %>% drop_na(case_control)
-res_legacy3 <- epiomics::owas_qgcomp(data_scaled_analysis,
+
+res_legacy5 <- epiomics::owas_qgcomp(data_scaled_analysis,
                              expnms = legacy_scld,
                              omics = "case_control",
                              covars = covars,
                              family = "binomial",
-                             q = 3
+                             q = 5
                           ) %>%
   mutate(odds_ratio = exp(psi),
          exp_ci_low = exp(lcl_psi),
          exp_ci_high = exp(ucl_psi))%>%
   mutate(type = "legacy_pfas") %>% select(type, everything())%>%
-  mutate(parameter = "q = 3")
+  mutate(parameter = "q = 5")
 
-res_legacy <- res_legacy3 %>% bind_rows(res_legacy4) %>% bind_rows(res_legacy5) %>%
-  bind_rows(res_legacy6) %>% bind_rows(res_legacy7)%>% bind_rows(res_legacy8)%>% mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high, n.digits = 3)) %>%
-  select(parameter,type,odds_ci, everything()) 
+# res_legacy <- res_legacy3 %>% bind_rows(res_legacy4) %>% bind_rows(res_legacy5) %>%
+#   bind_rows(res_legacy6) %>% bind_rows(res_legacy7)%>% bind_rows(res_legacy8)%>% mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high, n.digits = 3)) %>%
+#   select(parameter,type,odds_ci, everything()) 
 
-res_emerging8 <- epiomics::owas_qgcomp(data_scaled_analysis,
+res_emerging5 <- epiomics::owas_qgcomp(data_scaled_analysis,
                              expnms = emerging_scld,
                              omics = "case_control",
                              covars = covars,
                              family = "binomial",
-                             q = 8
+                             q = 5
                           ) %>%
   mutate(odds_ratio = exp(psi),
          exp_ci_low = exp(lcl_psi),
          exp_ci_high = exp(ucl_psi))%>%
   mutate(type = "emerging_pfas") %>% select(type, everything()) %>%
-  mutate(parameter = "q = 8")
+  mutate(parameter = "q = 5")
 
-res_emerging <- res_emerging4 %>% bind_rows(res_emerging5) %>%
-  bind_rows(res_emerging6) %>% bind_rows(res_emerging7)%>%
-  bind_rows(res_emerging8)%>%
-  mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
-  select(parameter,type,odds_ci, everything()) 
+# res_emerging <- res_emerging4 %>% bind_rows(res_emerging5) %>%
+#   bind_rows(res_emerging6) %>% bind_rows(res_emerging7)%>%
+#   bind_rows(res_emerging8)%>%
+#   mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
+#   select(parameter,type,odds_ci, everything()) 
 
-res_qgcomp <- res_legacy %>% bind_rows(res_emerging)%>%
+res_qgcomp <- res_legacy5 %>% bind_rows(res_emerging5)%>%
   select(type:feature, odds_ratio:exp_ci_high, everything())
 ```
 

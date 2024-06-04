@@ -22,12 +22,12 @@ source(fs::path(here::here("!directories.R")))
 source(fs::path(here::here("!load_data.R")))
 ```
 
-## Analysis1. Conditional logistic regression - Categorized PFAS and HCC
+## Analysis1. Logistic regression 
 **Outcome: case vs control**
 
-**Exposure: pfas**
+**Exposure: normalized pfas**
 
-**Covars: source, age, sex, race**
+**Covars: source, age, sex, race/eth, rural, smoking**
 
 **Analysis: logistic regression**
 
@@ -35,7 +35,7 @@ source(fs::path(here::here("!load_data.R")))
 res <- epiomics::owas(data_scaled,
                           var = "case_control", 
                           omics = pfas_name_scld,
-                          covars = covars[c(1,2,3,4,5)],
+                          covars = covars,
                           var_exposure_or_outcome = "outcome",
                           family = "binomial",
                           conf_int = TRUE,
@@ -69,7 +69,6 @@ res1 <- res |>
 
 ## Fig. PFAS and outcome
 ```{r plot}
-
 (plot <-  ggplot(res1,
        aes(x = odds_ratio, y = fct_reorder(plot_name, odds_ratio), color = sig)) +
   geom_errorbar(aes(xmin = exp_ci_low, xmax = exp_ci_high),
@@ -77,55 +76,21 @@ res1 <- res |>
   geom_point(size = 1, position = position_dodge(width = 1)) + 
   geom_vline(xintercept = 1, linetype = 2, color = "grey") +
   xlab("Odds Ratio (95% CI)") +
-  theme(#axis.title.x = element_blank(),
-        # axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5), 
+  theme(
         legend.position = "bottom",
         panel.background = element_rect(fill="white"), 
         strip.background = element_rect(fill = "white"),
         strip.text.y = element_text(angle = 0, hjust = 0),
-        # strip.text.x = element_blank(),
         text = element_text(size = 15),
         axis.title.y = element_blank(),
         axis.line.x = element_line(color = "black"),
         axis.line.y = element_line(color = "black")) +
   ylab("OR (95% CI) per\ndoubling of PFAS") +
-  # ggtitle("Interaction of PFAS and PRS") +
-  scale_color_manual(values = c( "black","purple","red")))
-# scale_color_manual(values = c( "black","red")))
-
-
-# p1 <- pfhpa_hcc + geom_text(
-#   data    = all_result_df3 %>% filter(pfas_name == "PFHpA"),
-#   mapping = aes(x = -Inf, y = -Inf, label = label),
-#   color = "black",
-#   hjust   = -0.3,
-#   vjust   = -13,
-#   size = 4
-# )
-
-# (fig <- cowplot::plot_grid(NULL, pfhpa_hcc_main, NULL, 
-#                            p1,
-#                            ncol = 1, 
-#                            rel_heights = c(0.02, 0.2, 0.02, 0.12),
-#                            labels = c("A. PFAS and HCC","", "B. Dose-response of PFHpA and HCC", ""),
-#                           label_x = c(0.13, 0, 0.04, 0),
-#                           label_size = 12,
-#                           align = "v",
-#                           axis = "lt"))
-
-# (fig <- cowplot::plot_grid(pfhpa_hcc_main, 
-#                            p1,
-#                            ncol = 1, 
-#                            rel_heights = c(0.2, 0.12),
-#                            labels = c("A. PFAS and HCC",
-#                                       "B. Dose-response of PFHpA and HCC"),
-#                           label_x = c(-0.08,-0.18),
-#                           label_size = 12,
-#                           align = "v",
-#                           axis = "lt"))
+  # scale_color_manual(values = c( "black","purple","red")))
+  scale_color_manual(values = c( "black","red")))
 
 ggsave(filename = fs::path(dir_figures,
-                           "Fig1. PFAS main Effect with covariates Imputed no smoking.jpeg"),
+                           "Fig1. PFAS main Effect with covariates Imputed.jpeg"),
        width = 8,
        height = 8,
        dpi = 300,

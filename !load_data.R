@@ -23,12 +23,14 @@ emerging <- c("pfbs", "pf_pe_a","pf_pe_s","pf_hx_a","pfba")
 
 covars <- c("source", "age_at_enrollment","sex", 
             "race_eth_label", "rural", "smoking")
+
 covars_analysis <- covars[1:4]
 
-# Imputation of PFAS
+# Imputation of PFAS: min(pfas concentration)/sqrt(2)
 data_imputed <- data %>%
   mutate_at(.vars = pfas_name_analysis,
             .funs = ~ifelse(is.na(.),unique(sort(.))[2]/sqrt(2),.))
+
 # Adding normalized PFAS
 data_scaled <- data_imputed %>% 
   mutate_at(.vars = pfas_name_analysis,
