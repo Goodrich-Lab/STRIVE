@@ -1,0 +1,92 @@
+---
+title: 'STRIVE'
+subtitle: "Descriptive Stats"
+author: "Hongxu Wang"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+options(knitr.table.format = "html")
+knitr::opts_chunk$set(echo = TRUE)
+
+source(fs::path(here::here("!libraries.R")))
+source(fs::path(here::here("!directories.R")))
+source(fs::path(here::here("!load_data.R")))
+
+```
+
+
+```{r data summary,warning=FALSE}
+data1 <- data %>% drop_na(case_control) %>% select(-strive_id,-contains("scld")) %>%
+  mutate_at(.vars = covars[-2],
+            .funs = ~ as.character(.))
+# 
+# table1::table1(~.|case_control, data1)
+```
+
+# Check percentage of NA for each PFAS
+```{r percentage of NA, warning=FALSE}
+data_pfas<- data1 %>% select(pfas_name, case_control, -contains("scld"))
+
+## Stats----
+pfas_na <- data_pfas %>% 
+  pivot_longer(cols = pfas_name) %>%
+  group_by(name) %>%
+  dplyr::summarize(pct_na = sum(is.na(value))/dim(data_pfas)[1])%>%
+  ungroup()%>%
+  arrange(pct_na)
+
+pfas_na
+
+pfas_name_analysis <- pfas_na$name[1:15]
+
+```
+
+# Descriptive stats of PFAS in overall paricipants
+```{r descriptive stats for pfas, warning=FALSE}
+data_pfas<- data1 %>% select(pfas_name_analysis, case_control)
+
+## Stats----
+(pfas_stats <- data_pfas %>% 
+  pivot_longer(cols = pfas_name_analysis) %>%
+  drop_na() %>%
+  group_by(name) %>%
+  dplyr::summarise(
+    geometric_mean = jag2::fungm(value),
+    sd = jag2::fungsd(value),
+    min = min(value),
+    max = max(value),
+    percentile_25 = jag2::qntle_fxn(value, 0.25),
+    percentile_50 = jag2::qntle_fxn(value, 0.5),
+    percentile_75 = jag2::qntle_fxn(value, 0.75),
+    percentile_90 = jag2::qntle_fxn(value, 0.90)
+  ) %>% 
+  ungroup())
+
+# writexl::write_xlsx(pfas_stats, 
+#                     fs::path(dir_result,
+#                              "descriptive_stats_pfas.xlsx"))
+```
+
+# Descriptive stats split by outcome
+```{r stats,warning=FALSE, cache=FALSE}
+(data1 %>% select(pfas_name_analysis, covars, case_control) %>%
+  tbl_summary(by = case_control,
+              type = all_continuous() ~ "continuous2",
+              statistic = list(
+                               all_continuous() ~ c("{mean} ({sd})",
+                                                    "{median} ({p25}, {p75})"),
+                               all_categorical() ~ "{n} ({p}%)")) %>%
+  add_p(pvalue_fun = ~ style_pvalue(.x, digits = 2)) %>%
+  add_overall() %>%
+  add_n())
+```
+

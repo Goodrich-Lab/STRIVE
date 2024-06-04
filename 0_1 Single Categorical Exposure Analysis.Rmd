@@ -1,0 +1,134 @@
+---
+title: 'STRIVE'
+subtitle: "Final Analysis"
+author: "Hongxu Wang"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup univariate analysis cat pfas, include=FALSE, echo=FALSE}
+options(knitr.table.format = "html")
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE, message = FALSE, cache=FALSE,collapse=FALSE)
+
+source(fs::path(here::here("!libraries.R")))
+source(fs::path(here::here("!directories.R")))
+# source(fs::path(here::here("functions.R")))
+source(fs::path(here::here("!load_data.R")))
+```
+
+## Analysis1. Conditional logistic regression - Categorized PFAS and HCC
+**Outcome: case vs control**
+
+**Exposure: pfas**
+
+**Covars: source, age, sex, race**
+
+**Analysis: logistic regression**
+
+```{r analysis}
+res <- epiomics::owas(data_scaled,
+                          var = "case_control", 
+                          omics = pfas_name_scld,
+                          covars = covars[c(1,2,3,4,5)],
+                          var_exposure_or_outcome = "outcome",
+                          family = "binomial",
+                          conf_int = TRUE,
+                          ref_group = 0) %>%
+  mutate(odds_ratio = exp(estimate),
+         exp_ci_low = exp(conf_low),
+         exp_ci_high = exp(conf_high))
+
+# reorder PFAS by estimate
+res1 <- res |> 
+  mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~
+                           "Sig.(FDR < 0.05)",
+                          p_value < 0.05 ~ "Sig.(p value < 0.05)", 
+                         p_value >= 0.05 ~ "Not Sig.")) %>%
+  mutate(plot_name = case_when(grepl("pfba", feature_name) ~ "PFBA",
+                               grepl("pf_hp_a", feature_name) ~ "PFHpA",
+                               grepl("pf_pe_s", feature_name) ~ "PFPeS",
+                               grepl("pfbs", feature_name) ~ "PFBS",
+                               grepl("pf_hx_a", feature_name) ~ "PFHxA",
+                               grepl("pf_do_a", feature_name) ~ "PFDoA",
+                               grepl("pfda", feature_name) ~ "PFDA",
+                               grepl("pf_pe_a", feature_name) ~ "PFPeA",
+                               grepl("pf_un_a", feature_name) ~ "PFUnA",
+                               grepl("pfna", feature_name) ~ "PFNA",
+                               grepl("pfos", feature_name) ~ "PFOS",
+                               grepl("pf_hx_s", feature_name) ~ "PFHxS",
+                               grepl("pf_hp_s", feature_name) ~ "PFHpS",
+                               grepl("pfoa", feature_name) ~ "PFOA",
+                               grepl("pf3ons", feature_name) ~ "9CL-PF3ONS",))
+```
+
+## Fig. PFAS and outcome
+```{r plot}
+
+(plot <-  ggplot(res1,
+       aes(x = odds_ratio, y = fct_reorder(plot_name, odds_ratio), color = sig)) +
+  geom_errorbar(aes(xmin = exp_ci_low, xmax = exp_ci_high),
+                width = 0, position = position_dodge(width = 1)) +
+  geom_point(size = 1, position = position_dodge(width = 1)) + 
+  geom_vline(xintercept = 1, linetype = 2, color = "grey") +
+  xlab("Odds Ratio (95% CI)") +
+  theme(#axis.title.x = element_blank(),
+        # axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5), 
+        legend.position = "bottom",
+        panel.background = element_rect(fill="white"), 
+        strip.background = element_rect(fill = "white"),
+        strip.text.y = element_text(angle = 0, hjust = 0),
+        # strip.text.x = element_blank(),
+        text = element_text(size = 15),
+        axis.title.y = element_blank(),
+        axis.line.x = element_line(color = "black"),
+        axis.line.y = element_line(color = "black")) +
+  ylab("OR (95% CI) per\ndoubling of PFAS") +
+  # ggtitle("Interaction of PFAS and PRS") +
+  scale_color_manual(values = c( "black","purple","red")))
+# scale_color_manual(values = c( "black","red")))
+
+
+# p1 <- pfhpa_hcc + geom_text(
+#   data    = all_result_df3 %>% filter(pfas_name == "PFHpA"),
+#   mapping = aes(x = -Inf, y = -Inf, label = label),
+#   color = "black",
+#   hjust   = -0.3,
+#   vjust   = -13,
+#   size = 4
+# )
+
+# (fig <- cowplot::plot_grid(NULL, pfhpa_hcc_main, NULL, 
+#                            p1,
+#                            ncol = 1, 
+#                            rel_heights = c(0.02, 0.2, 0.02, 0.12),
+#                            labels = c("A. PFAS and HCC","", "B. Dose-response of PFHpA and HCC", ""),
+#                           label_x = c(0.13, 0, 0.04, 0),
+#                           label_size = 12,
+#                           align = "v",
+#                           axis = "lt"))
+
+# (fig <- cowplot::plot_grid(pfhpa_hcc_main, 
+#                            p1,
+#                            ncol = 1, 
+#                            rel_heights = c(0.2, 0.12),
+#                            labels = c("A. PFAS and HCC",
+#                                       "B. Dose-response of PFHpA and HCC"),
+#                           label_x = c(-0.08,-0.18),
+#                           label_size = 12,
+#                           align = "v",
+#                           axis = "lt"))
+
+ggsave(filename = fs::path(dir_figures,
+                           "Fig1. PFAS main Effect with covariates Imputed no smoking.jpeg"),
+       width = 8,
+       height = 8,
+       dpi = 300,
+       bg = "white")
+```
+
