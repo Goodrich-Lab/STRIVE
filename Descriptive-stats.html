@@ -11,7 +11,7 @@
 
 <meta name="author" content="Hongxu Wang" />
 
-<meta name="date" content="2024-05-22" />
+<meta name="date" content="2024-06-20" />
 
 <title>STRIVE</title>
 
@@ -2841,12 +2841,12 @@ border-radius: 0px;
 <h1 class="title toc-ignore">STRIVE</h1>
 <h3 class="subtitle">Descriptive Stats</h3>
 <h4 class="author">Hongxu Wang</h4>
-<h4 class="date">22 May 2024</h4>
+<h4 class="date">20 June 2024</h4>
 
 </div>
 
 
-<pre class="r"><code>data1 &lt;- data%&gt;% drop_na(case_control) %&gt;% select(-strive_id,-contains(&quot;scld&quot;)) %&gt;%
+<pre class="r"><code>data1 &lt;- data %&gt;% drop_na(case_control) %&gt;% select(-strive_id,-contains(&quot;scld&quot;)) %&gt;%
   mutate_at(.vars = covars[-2],
             .funs = ~ as.character(.))
 # 
@@ -2869,7 +2869,7 @@ pfas_na</code></pre>
 {"columns":[{"label":["name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["pct_na"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"pf_hx_s","2":"0.000000000"},{"1":"pfda","2":"0.000000000"},{"1":"pfna","2":"0.000000000"},{"1":"pfos","2":"0.000000000"},{"1":"pf_hp_a","2":"0.002985075"},{"1":"pfbs","2":"0.002985075"},{"1":"pfoa","2":"0.002985075"},{"1":"pf_pe_a","2":"0.005970149"},{"1":"pf_un_a","2":"0.005970149"},{"1":"pf_hp_s","2":"0.011940299"},{"1":"pf_do_a","2":"0.098507463"},{"1":"pf_pe_s","2":"0.104477612"},{"1":"x9cl_pf3ons","2":"0.265671642"},{"1":"pf_hx_a","2":"0.328358209"},{"1":"pfba","2":"0.788059701"},{"1":"x8_2fts","2":"0.934328358"},{"1":"hfpo_da","2":"0.952238806"},{"1":"pfeesa","2":"0.958208955"},{"1":"x6_2fts","2":"0.979104478"},{"1":"x11cl_pf3o_ud_s","2":"0.991044776"},{"1":"adona","2":"0.994029851"},{"1":"nfdha","2":"0.997014925"},{"1":"pfmba","2":"0.997014925"},{"1":"pfmpa","2":"0.997014925"},{"1":"x4_2fts","2":"0.997014925"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code>pfas_name_analysis &lt;- pfas_na$name[1:15]</code></pre>
+<pre class="r"><code>pfas_name_analysis &lt;- pfas_na$name[1:12]</code></pre>
 </div>
 <div id="descriptive-stats-of-pfas-in-overall-paricipants" class="section level1">
 <h1>Descriptive stats of PFAS in overall paricipants</h1>
@@ -2893,7 +2893,7 @@ pfas_na</code></pre>
   ungroup())</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["geometric_mean"],"name":[2],"type":["chr"],"align":["left"]},{"label":["sd"],"name":[3],"type":["chr"],"align":["left"]},{"label":["min"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["max"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["percentile_25"],"name":[6],"type":["chr"],"align":["left"]},{"label":["percentile_50"],"name":[7],"type":["chr"],"align":["left"]},{"label":["percentile_75"],"name":[8],"type":["chr"],"align":["left"]},{"label":["percentile_90"],"name":[9],"type":["chr"],"align":["left"]}],"data":[{"1":"pf_do_a","2":"0.0141 [0.0127, 0.0156]","3":"0.0 (2.5)","4":"0.001","5":"0.337","6":"0.008","7":"0.013","8":"0.022","9":"0.0469"},{"1":"pf_hp_a","2":"0.0522 [0.0485, 0.0562]","3":"0.1 (2.0)","4":"0.007","5":"0.430","6":"0.0332","7":"0.0485","8":"0.0808","9":"0.131"},{"1":"pf_hp_s","2":"0.139 [0.126, 0.154]","3":"0.1 (2.5)","4":"0.004","5":"1.046","6":"0.078","7":"0.151","8":"0.266","9":"0.434"},{"1":"pf_hx_a","2":"0.0133 [0.0124, 0.0142]","3":"0.0 (1.6)","4":"0.003","5":"0.101","6":"0.01","7":"0.013","8":"0.018","9":"0.025"},{"1":"pf_hx_s","2":"0.929 [0.833, 1.04]","3":"0.9 (2.8)","4":"0.012","5":"13.269","6":"0.542","7":"1.04","8":"1.7","9":"2.99"},{"1":"pf_pe_a","2":"0.0445 [0.0427, 0.0464]","3":"0.0 (1.5)","4":"0.023","5":"0.280","6":"0.034","7":"0.042","8":"0.053","9":"0.0678"},{"1":"pf_pe_s","2":"0.0229 [0.0211, 0.0248]","3":"0.0 (2.1)","4":"0.005","5":"0.254","6":"0.014","7":"0.021","8":"0.0353","9":"0.0561"},{"1":"pf_un_a","2":"0.0783 [0.0704, 0.0872]","3":"0.1 (2.7)","4":"0.006","5":"1.021","6":"0.042","7":"0.078","8":"0.147","9":"0.287"},{"1":"pfba","2":"0.082 [0.064, 0.105]","3":"0.1 (2.8)","4":"0.006","5":"0.480","6":"0.045","7":"0.11","8":"0.198","9":"0.233"},{"1":"pfbs","2":"0.0319 [0.0295, 0.0345]","3":"0.0 (2.1)","4":"0.008","5":"1.334","6":"0.02","7":"0.029","8":"0.047","9":"0.0721"},{"1":"pfda","2":"0.163 [0.148, 0.18]","3":"0.2 (2.5)","4":"0.011","5":"2.375","6":"0.0865","7":"0.162","8":"0.265","9":"0.566"},{"1":"pfna","2":"0.397 [0.363, 0.434]","3":"0.4 (2.3)","4":"0.016","5":"4.875","6":"0.253","7":"0.42","8":"0.643","9":"1.09"},{"1":"pfoa","2":"1.01 [0.914, 1.11]","3":"1.0 (2.4)","4":"0.047","5":"13.699","6":"0.633","7":"1.07","8":"1.85","9":"2.71"},{"1":"pfos","2":"3.95 [3.55,  4.4]","3":"4.0 (2.7)","4":"0.082","5":"47.909","6":"2.25","7":"4.25","8":"7.06","9":"12.6"},{"1":"x9cl_pf3ons","2":"0.016 [0.0143, 0.018]","3":"0.0 (2.5)","4":"0.002","5":"2.136","6":"0.008","7":"0.016","8":"0.028","9":"0.0445"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["geometric_mean"],"name":[2],"type":["chr"],"align":["left"]},{"label":["sd"],"name":[3],"type":["chr"],"align":["left"]},{"label":["min"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["max"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["percentile_25"],"name":[6],"type":["chr"],"align":["left"]},{"label":["percentile_50"],"name":[7],"type":["chr"],"align":["left"]},{"label":["percentile_75"],"name":[8],"type":["chr"],"align":["left"]},{"label":["percentile_90"],"name":[9],"type":["chr"],"align":["left"]}],"data":[{"1":"pf_do_a","2":"0.0141 [0.0127, 0.0156]","3":"0.0 (2.5)","4":"0.001","5":"0.337","6":"0.008","7":"0.013","8":"0.022","9":"0.0469"},{"1":"pf_hp_a","2":"0.0522 [0.0485, 0.0562]","3":"0.1 (2.0)","4":"0.007","5":"0.430","6":"0.0332","7":"0.0485","8":"0.0808","9":"0.131"},{"1":"pf_hp_s","2":"0.139 [0.126, 0.154]","3":"0.1 (2.5)","4":"0.004","5":"1.046","6":"0.078","7":"0.151","8":"0.266","9":"0.434"},{"1":"pf_hx_s","2":"0.929 [0.833, 1.04]","3":"0.9 (2.8)","4":"0.012","5":"13.269","6":"0.542","7":"1.04","8":"1.7","9":"2.99"},{"1":"pf_pe_a","2":"0.0445 [0.0427, 0.0464]","3":"0.0 (1.5)","4":"0.023","5":"0.280","6":"0.034","7":"0.042","8":"0.053","9":"0.0678"},{"1":"pf_pe_s","2":"0.0229 [0.0211, 0.0248]","3":"0.0 (2.1)","4":"0.005","5":"0.254","6":"0.014","7":"0.021","8":"0.0353","9":"0.0561"},{"1":"pf_un_a","2":"0.0783 [0.0704, 0.0872]","3":"0.1 (2.7)","4":"0.006","5":"1.021","6":"0.042","7":"0.078","8":"0.147","9":"0.287"},{"1":"pfbs","2":"0.0319 [0.0295, 0.0345]","3":"0.0 (2.1)","4":"0.008","5":"1.334","6":"0.02","7":"0.029","8":"0.047","9":"0.0721"},{"1":"pfda","2":"0.163 [0.148, 0.18]","3":"0.2 (2.5)","4":"0.011","5":"2.375","6":"0.0865","7":"0.162","8":"0.265","9":"0.566"},{"1":"pfna","2":"0.397 [0.363, 0.434]","3":"0.4 (2.3)","4":"0.016","5":"4.875","6":"0.253","7":"0.42","8":"0.643","9":"1.09"},{"1":"pfoa","2":"1.01 [0.914, 1.11]","3":"1.0 (2.4)","4":"0.047","5":"13.699","6":"0.633","7":"1.07","8":"1.85","9":"2.71"},{"1":"pfos","2":"3.95 [3.55,  4.4]","3":"4.0 (2.7)","4":"0.082","5":"47.909","6":"2.25","7":"4.25","8":"7.06","9":"12.6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <pre class="r"><code># writexl::write_xlsx(pfas_stats, 
@@ -2912,22 +2912,20 @@ pfas_na</code></pre>
   add_p(pvalue_fun = ~ style_pvalue(.x, digits = 2)) %&gt;%
   add_overall() %&gt;%
   add_n())</code></pre>
-<pre><code>## Warning for variable &#39;pfba&#39;:
-## simpleWarning in wilcox.test.default(x = DATA[[1L]], y = DATA[[2L]], ...): cannot compute exact p-value with ties</code></pre>
-<div id="njqclsrzdr" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#njqclsrzdr table {
+<div id="nbsyiuwibv" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#nbsyiuwibv table {
 font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 -webkit-font-smoothing: antialiased;
 -moz-osx-font-smoothing: grayscale;
 }
-#njqclsrzdr thead, #njqclsrzdr tbody, #njqclsrzdr tfoot, #njqclsrzdr tr, #njqclsrzdr td, #njqclsrzdr th {
+#nbsyiuwibv thead, #nbsyiuwibv tbody, #nbsyiuwibv tfoot, #nbsyiuwibv tr, #nbsyiuwibv td, #nbsyiuwibv th {
 border-style: none;
 }
-#njqclsrzdr p {
+#nbsyiuwibv p {
 margin: 0;
 padding: 0;
 }
-#njqclsrzdr .gt_table {
+#nbsyiuwibv .gt_table {
 display: table;
 border-collapse: collapse;
 line-height: normal;
@@ -2952,11 +2950,11 @@ border-left-style: none;
 border-left-width: 2px;
 border-left-color: #D3D3D3;
 }
-#njqclsrzdr .gt_caption {
+#nbsyiuwibv .gt_caption {
 padding-top: 4px;
 padding-bottom: 4px;
 }
-#njqclsrzdr .gt_title {
+#nbsyiuwibv .gt_title {
 color: #333333;
 font-size: 125%;
 font-weight: initial;
@@ -2967,7 +2965,7 @@ padding-right: 5px;
 border-bottom-color: #FFFFFF;
 border-bottom-width: 0;
 }
-#njqclsrzdr .gt_subtitle {
+#nbsyiuwibv .gt_subtitle {
 color: #333333;
 font-size: 85%;
 font-weight: initial;
@@ -2978,7 +2976,7 @@ padding-right: 5px;
 border-top-color: #FFFFFF;
 border-top-width: 0;
 }
-#njqclsrzdr .gt_heading {
+#nbsyiuwibv .gt_heading {
 background-color: #FFFFFF;
 text-align: center;
 border-bottom-color: #FFFFFF;
@@ -2989,12 +2987,12 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#njqclsrzdr .gt_bottom_border {
+#nbsyiuwibv .gt_bottom_border {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#njqclsrzdr .gt_col_headings {
+#nbsyiuwibv .gt_col_headings {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -3008,7 +3006,7 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#njqclsrzdr .gt_col_heading {
+#nbsyiuwibv .gt_col_heading {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3027,7 +3025,7 @@ padding-left: 5px;
 padding-right: 5px;
 overflow-x: hidden;
 }
-#njqclsrzdr .gt_column_spanner_outer {
+#nbsyiuwibv .gt_column_spanner_outer {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3038,13 +3036,13 @@ padding-bottom: 0;
 padding-left: 4px;
 padding-right: 4px;
 }
-#njqclsrzdr .gt_column_spanner_outer:first-child {
+#nbsyiuwibv .gt_column_spanner_outer:first-child {
 padding-left: 0;
 }
-#njqclsrzdr .gt_column_spanner_outer:last-child {
+#nbsyiuwibv .gt_column_spanner_outer:last-child {
 padding-right: 0;
 }
-#njqclsrzdr .gt_column_spanner {
+#nbsyiuwibv .gt_column_spanner {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
@@ -3055,10 +3053,10 @@ overflow-x: hidden;
 display: inline-block;
 width: 100%;
 }
-#njqclsrzdr .gt_spanner_row {
+#nbsyiuwibv .gt_spanner_row {
 border-bottom-style: hidden;
 }
-#njqclsrzdr .gt_group_heading {
+#nbsyiuwibv .gt_group_heading {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3083,7 +3081,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 text-align: left;
 }
-#njqclsrzdr .gt_empty_group_heading {
+#nbsyiuwibv .gt_empty_group_heading {
 padding: 0.5px;
 color: #333333;
 background-color: #FFFFFF;
@@ -3097,13 +3095,13 @@ border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 vertical-align: middle;
 }
-#njqclsrzdr .gt_from_md > :first-child {
+#nbsyiuwibv .gt_from_md > :first-child {
 margin-top: 0;
 }
-#njqclsrzdr .gt_from_md > :last-child {
+#nbsyiuwibv .gt_from_md > :last-child {
 margin-bottom: 0;
 }
-#njqclsrzdr .gt_row {
+#nbsyiuwibv .gt_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3121,7 +3119,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 overflow-x: hidden;
 }
-#njqclsrzdr .gt_stub {
+#nbsyiuwibv .gt_stub {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3133,7 +3131,7 @@ border-right-color: #D3D3D3;
 padding-left: 5px;
 padding-right: 5px;
 }
-#njqclsrzdr .gt_stub_row_group {
+#nbsyiuwibv .gt_stub_row_group {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3146,13 +3144,13 @@ padding-left: 5px;
 padding-right: 5px;
 vertical-align: top;
 }
-#njqclsrzdr .gt_row_group_first td {
+#nbsyiuwibv .gt_row_group_first td {
 border-top-width: 2px;
 }
-#njqclsrzdr .gt_row_group_first th {
+#nbsyiuwibv .gt_row_group_first th {
 border-top-width: 2px;
 }
-#njqclsrzdr .gt_summary_row {
+#nbsyiuwibv .gt_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -3161,14 +3159,14 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#njqclsrzdr .gt_first_summary_row {
+#nbsyiuwibv .gt_first_summary_row {
 border-top-style: solid;
 border-top-color: #D3D3D3;
 }
-#njqclsrzdr .gt_first_summary_row.thick {
+#nbsyiuwibv .gt_first_summary_row.thick {
 border-top-width: 2px;
 }
-#njqclsrzdr .gt_last_summary_row {
+#nbsyiuwibv .gt_last_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3177,7 +3175,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#njqclsrzdr .gt_grand_summary_row {
+#nbsyiuwibv .gt_grand_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -3186,7 +3184,7 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#njqclsrzdr .gt_first_grand_summary_row {
+#nbsyiuwibv .gt_first_grand_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3195,7 +3193,7 @@ border-top-style: double;
 border-top-width: 6px;
 border-top-color: #D3D3D3;
 }
-#njqclsrzdr .gt_last_grand_summary_row_top {
+#nbsyiuwibv .gt_last_grand_summary_row_top {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3204,10 +3202,10 @@ border-bottom-style: double;
 border-bottom-width: 6px;
 border-bottom-color: #D3D3D3;
 }
-#njqclsrzdr .gt_striped {
+#nbsyiuwibv .gt_striped {
 background-color: rgba(128, 128, 128, 0.05);
 }
-#njqclsrzdr .gt_table_body {
+#nbsyiuwibv .gt_table_body {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -3215,7 +3213,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#njqclsrzdr .gt_footnotes {
+#nbsyiuwibv .gt_footnotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -3228,7 +3226,7 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#njqclsrzdr .gt_footnote {
+#nbsyiuwibv .gt_footnote {
 margin: 0px;
 font-size: 90%;
 padding-top: 4px;
@@ -3236,7 +3234,7 @@ padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#njqclsrzdr .gt_sourcenotes {
+#nbsyiuwibv .gt_sourcenotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -3249,57 +3247,57 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#njqclsrzdr .gt_sourcenote {
+#nbsyiuwibv .gt_sourcenote {
 font-size: 90%;
 padding-top: 4px;
 padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#njqclsrzdr .gt_left {
+#nbsyiuwibv .gt_left {
 text-align: left;
 }
-#njqclsrzdr .gt_center {
+#nbsyiuwibv .gt_center {
 text-align: center;
 }
-#njqclsrzdr .gt_right {
+#nbsyiuwibv .gt_right {
 text-align: right;
 font-variant-numeric: tabular-nums;
 }
-#njqclsrzdr .gt_font_normal {
+#nbsyiuwibv .gt_font_normal {
 font-weight: normal;
 }
-#njqclsrzdr .gt_font_bold {
+#nbsyiuwibv .gt_font_bold {
 font-weight: bold;
 }
-#njqclsrzdr .gt_font_italic {
+#nbsyiuwibv .gt_font_italic {
 font-style: italic;
 }
-#njqclsrzdr .gt_super {
+#nbsyiuwibv .gt_super {
 font-size: 65%;
 }
-#njqclsrzdr .gt_footnote_marks {
+#nbsyiuwibv .gt_footnote_marks {
 font-size: 75%;
 vertical-align: 0.4em;
 position: initial;
 }
-#njqclsrzdr .gt_asterisk {
+#nbsyiuwibv .gt_asterisk {
 font-size: 100%;
 vertical-align: 0;
 }
-#njqclsrzdr .gt_indent_1 {
+#nbsyiuwibv .gt_indent_1 {
 text-indent: 5px;
 }
-#njqclsrzdr .gt_indent_2 {
+#nbsyiuwibv .gt_indent_2 {
 text-indent: 10px;
 }
-#njqclsrzdr .gt_indent_3 {
+#nbsyiuwibv .gt_indent_3 {
 text-indent: 15px;
 }
-#njqclsrzdr .gt_indent_4 {
+#nbsyiuwibv .gt_indent_4 {
 text-indent: 20px;
 }
-#njqclsrzdr .gt_indent_5 {
+#nbsyiuwibv .gt_indent_5 {
 text-indent: 25px;
 }
 </style>
@@ -3579,78 +3577,6 @@ text-indent: 25px;
 <td headers="stat_0" class="gt_row gt_center">35</td>
 <td headers="stat_1" class="gt_row gt_center">16</td>
 <td headers="stat_2" class="gt_row gt_center">19</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">x9cl_pf3ons</td>
-<td headers="n" class="gt_row gt_center">246</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.036 (0.163)</td>
-<td headers="stat_1" class="gt_row gt_center">0.047 (0.201)</td>
-<td headers="stat_2" class="gt_row gt_center">0.015 (0.019)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.016 (0.008, 0.028)</td>
-<td headers="stat_1" class="gt_row gt_center">0.020 (0.011, 0.033)</td>
-<td headers="stat_2" class="gt_row gt_center">0.010 (0.005, 0.018)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">89</td>
-<td headers="stat_1" class="gt_row gt_center">39</td>
-<td headers="stat_2" class="gt_row gt_center">50</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">pf_hx_a</td>
-<td headers="n" class="gt_row gt_center">225</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">0.005</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.015 (0.011)</td>
-<td headers="stat_1" class="gt_row gt_center">0.014 (0.010)</td>
-<td headers="stat_2" class="gt_row gt_center">0.017 (0.011)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.013 (0.010, 0.018)</td>
-<td headers="stat_1" class="gt_row gt_center">0.012 (0.009, 0.017)</td>
-<td headers="stat_2" class="gt_row gt_center">0.014 (0.011, 0.019)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">110</td>
-<td headers="stat_1" class="gt_row gt_center">73</td>
-<td headers="stat_2" class="gt_row gt_center">37</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">pfba</td>
-<td headers="n" class="gt_row gt_center">71</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.12 (0.10)</td>
-<td headers="stat_1" class="gt_row gt_center">0.09 (0.08)</td>
-<td headers="stat_2" class="gt_row gt_center">0.17 (0.11)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.11 (0.05, 0.20)</td>
-<td headers="stat_1" class="gt_row gt_center">0.07 (0.02, 0.12)</td>
-<td headers="stat_2" class="gt_row gt_center">0.14 (0.10, 0.22)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">264</td>
-<td headers="stat_1" class="gt_row gt_center">160</td>
-<td headers="stat_2" class="gt_row gt_center">104</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">source</td>
 <td headers="n" class="gt_row gt_center">335</td>

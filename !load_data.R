@@ -10,16 +10,16 @@ data <- readxl::read_xlsx(fs::path(
 
 pfas_name <- colnames(data)[3:27]
 
+# For the analysis, only focusing on the PFAS with <25% below LOD
 pfas_name_analysis <- c("pf_hx_s","pfda","pfna","pfos",
                         "pf_hp_a","pfbs", "pfoa","pf_pe_a",
-                        "pf_un_a","pf_hp_s","pf_do_a","pf_pe_s",
-                        "x9cl_pf3ons","pf_hx_a","pfba")
+                        "pf_un_a","pf_hp_s","pf_do_a","pf_pe_s")
 
 legacy <- c("pf_hx_s","pfda","pfna","pfos",
             "pf_hp_a","pfoa","pf_un_a","pf_hp_s",
-            "pf_do_a","x9cl_pf3ons")
+            "pf_do_a")
 
-emerging <- c("pfbs", "pf_pe_a","pf_pe_s","pf_hx_a","pfba")
+emerging <- c("pfbs", "pf_pe_a","pf_pe_s")
 
 covars <- c("source", "age_at_enrollment","sex", 
             "race_eth_label", "rural", "smoking")

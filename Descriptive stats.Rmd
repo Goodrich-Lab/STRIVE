@@ -46,7 +46,8 @@ pfas_na <- data_pfas %>%
 
 pfas_na
 
-pfas_name_analysis <- pfas_na$name[1:15]
+
+pfas_name_analysis <- pfas_na$name[1:12]
 
 ```
 
