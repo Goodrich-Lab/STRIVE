@@ -39,7 +39,7 @@ res <- epiomics::owas(data_scaled,
                           var_exposure_or_outcome = "outcome",
                           family = "binomial",
                           conf_int = TRUE,
-                          ref_group = 0) %>%
+                          ref_group = "Healthy") %>%
   mutate(odds_ratio = exp(estimate),
          exp_ci_low = exp(conf_low),
          exp_ci_high = exp(conf_high))
@@ -65,6 +65,10 @@ res1 <- res |>
                                grepl("pf_hp_s", feature_name) ~ "PFHpS",
                                grepl("pfoa", feature_name) ~ "PFOA",
                                grepl("pf3ons", feature_name) ~ "9CL-PF3ONS",))
+
+writexl::write_xlsx(res1,
+                    fs::path(dir_result,
+                             "exposure outcome association.xlsx"))
 ```
 
 ## Fig. PFAS and outcome

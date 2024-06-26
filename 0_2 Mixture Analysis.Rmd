@@ -22,9 +22,12 @@ source(fs::path(here::here("!directories.R")))
 source(fs::path(here::here("!load_data.R")))
 ```
 
-## Mixture Analysis-qgcomp
+## Mixture Analysis-qgcomp(continuous PFAS)
 ```{r qgcomp}
-data_scaled_analysis <- data_scaled %>% drop_na(case_control)
+set.seed(1234)
+data_scaled_analysis <- data_scaled %>% 
+  mutate(case_control = ifelse(case_control =="Healthy", 0, 1))%>%
+  drop_na(case_control)
 
 res_legacy5 <- epiomics::owas_qgcomp(data_scaled_analysis,
                              expnms = legacy_scld,
@@ -37,7 +40,9 @@ res_legacy5 <- epiomics::owas_qgcomp(data_scaled_analysis,
          exp_ci_low = exp(lcl_psi),
          exp_ci_high = exp(ucl_psi))%>%
   mutate(type = "legacy_pfas") %>% select(type, everything())%>%
-  mutate(parameter = "q = 5")
+  mutate(parameter = "q = 5")%>%
+  mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
+  select(parameter,type,odds_ci, everything()) 
 
 # res_legacy <- res_legacy3 %>% bind_rows(res_legacy4) %>% bind_rows(res_legacy5) %>%
 #   bind_rows(res_legacy6) %>% bind_rows(res_legacy7)%>% bind_rows(res_legacy8)%>% mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high, n.digits = 3)) %>%
@@ -54,66 +59,43 @@ res_emerging5 <- epiomics::owas_qgcomp(data_scaled_analysis,
          exp_ci_low = exp(lcl_psi),
          exp_ci_high = exp(ucl_psi))%>%
   mutate(type = "emerging_pfas") %>% select(type, everything()) %>%
-  mutate(parameter = "q = 5")
+  mutate(parameter = "q = 5")%>%
+  mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
+  select(parameter,type,odds_ci, everything()) 
+
+qgcomp_output <- qgcomp.noboot(as.formula(paste("case_control~",
+                                                str_c(emerging_scld, collapse = "+") ,
+                                                "+",
+                                                str_c(covars, collapse = "+"))), # Covariates - same as MLR model
+                               expnms=emerging_scld, # Name of Mixtures
+                               data=data_scaled_analysis,
+                               family=binomial(), # family=binomial() for logistic
+                               q = 5)
+
+plot(qgcomp_output)
 
 # res_emerging <- res_emerging4 %>% bind_rows(res_emerging5) %>%
 #   bind_rows(res_emerging6) %>% bind_rows(res_emerging7)%>%
-#   bind_rows(res_emerging8)%>%
-#   mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
-#   select(parameter,type,odds_ci, everything()) 
+#   bind_rows(res_emerging8)
 
-res_qgcomp <- res_legacy5 %>% bind_rows(res_emerging5)%>%
-  select(type:feature, odds_ratio:exp_ci_high, everything())
-```
+res_qgcomp <- res_legacy5 %>% bind_rows(res_emerging5)
 
-## Mixture Analysis - gwqs
-```{r gwqs}
-model1 <- gwqs(as.formula(paste0(
-      "case_control",
-      " ~ ", "wqs+",
-      paste(covars, collapse = " + "))), 
-                     mix_name = legacy_scld, 
-                     data = data_scaled_analysis, 
-                     q = 4, validation =  0, b = 1000, b1_pos = FALSE, 
-                     b1_constr = FALSE, family = "binomial", seed = 2016)
-
-model2 <- gwqs(as.formula(paste0(
-      "case_control",
-      " ~ ", "wqs+",
-      paste(covars, collapse = " + "))), 
-                     mix_name = emerging_scld, 
-                     data = data_scaled_analysis, 
-                     q = 4, validation =  0, b = 1000, 
-                     b1_constr = FALSE, family = "binomial", seed = 2016)
-
-res_legacy_gwqs <- cbind(summary(model1)$coefficients, 
-                                    confint(model1)) %>% 
-                               as_tibble(rownames = "term") %>% 
-  mutate(type = "legacy_pfas") %>% select(type, everything())
-
-res_emerging_gwqs <- cbind(summary(model2)$coefficients, 
-                                    confint(model2)) %>% 
-                               as_tibble(rownames = "term") %>% 
-  mutate(type = "emerging_pfas") %>% select(type, everything())
-
-res_gwqs <- res_legacy_gwqs %>% bind_rows(res_emerging_gwqs) 
 
 # bar plot
 (panel_a <- ggplot(
-  data = res_gwqs %>% 
-    dplyr::filter(term == "wqs"),
-  aes(y = exp(Estimate), x = type)
+  data = res_qgcomp,
+  aes(y = exp(psi), x = type)
 ) +
   geom_point(shape = 20, size = 2, 
              position = position_dodge(width = 1)) +
   geom_errorbar(aes(
-    ymin = exp(`2.5 %`),
-    ymax = exp(`97.5 %`)),
+    ymin = exp(lcl_psi),
+    ymax = exp(ucl_psi)),
     width = 0.2, alpha= 0.7, linewidth = 0.5) +
   geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
   # scale_x_discrete(limits=rev) +
   # scale_y_continuous(trans = "log2") +
-  ggtitle("Overall Mixture Effect Using gWQS") +
+  ggtitle("Overall Mixture Effect Using qgcomp") +
   # xlab("Overall\nmixture effect") +
   ylab("Odds ratio") +
   coord_flip()+
@@ -126,124 +108,289 @@ res_gwqs <- res_legacy_gwqs %>% bind_rows(res_emerging_gwqs)
     axis.title.y = element_blank()
   ))
 
-(panel_b1 <- ggplot(
-  data =  model1$final_weights, 
-  aes(x = reorder(mix_name, mean_weight), y = mean_weight)
+ggsave(
+  plot = panel_a,
+  fs::path(dir_figures,
+    "Mixture_effect_qgcomp.png"
+  ),
+  width = 3.5, height = 2, dpi = 500
+)
+```
+
+
+
+## Mixture Analysis-qgcomp(categorical PFAS)
+```{r qgcomp}
+set.seed(1234)
+data_scaled_analysis <- data_scaled %>% 
+  mutate(case_control = ifelse(case_control =="Healthy", 0, 1))%>%
+  drop_na(case_control)
+
+res_legacy <- epiomics::owas_qgcomp(data_scaled_analysis,
+                             expnms = legacy_cat,
+                             omics = "case_control",
+                             covars = covars,
+                             family = "binomial",
+                             q = NULL
+                          ) %>%
+  mutate(odds_ratio = exp(psi),
+         exp_ci_low = exp(lcl_psi),
+         exp_ci_high = exp(ucl_psi))%>%
+  mutate(type = "legacy_pfas") %>% select(type, everything())%>%
+  mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
+  select(type,odds_ci, everything()) 
+
+# res_legacy <- res_legacy3 %>% bind_rows(res_legacy4) %>% bind_rows(res_legacy5) %>%
+#   bind_rows(res_legacy6) %>% bind_rows(res_legacy7)%>% bind_rows(res_legacy8)%>% mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high, n.digits = 3)) %>%
+#   select(parameter,type,odds_ci, everything()) 
+
+res_emerging <- epiomics::owas_qgcomp(data_scaled_analysis,
+                             expnms = emerging_cat,
+                             omics = "case_control",
+                             covars = covars,
+                             family = "binomial",
+                             q = NULL
+                          ) %>%
+  mutate(odds_ratio = exp(psi),
+         exp_ci_low = exp(lcl_psi),
+         exp_ci_high = exp(ucl_psi))%>%
+  mutate(type = "emerging_pfas") %>% select(type, everything()) %>%
+  mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
+  select(type,odds_ci, everything()) 
+
+# qgcomp_output <- qgcomp.noboot(as.formula(paste("case_control~",
+#                                                 str_c(emerging_scld, collapse = "+") ,
+#                                                 "+",
+#                                                 str_c(covars, collapse = "+"))), # Covariates - same as MLR model
+#                                expnms=emerging_scld, # Name of Mixtures
+#                                data=data_scaled_analysis,
+#                                family=binomial(), # family=binomial() for logistic
+#                                q = 5)
+# 
+# plot(qgcomp_output)
+
+# res_emerging <- res_emerging4 %>% bind_rows(res_emerging5) %>%
+#   bind_rows(res_emerging6) %>% bind_rows(res_emerging7)%>%
+#   bind_rows(res_emerging8)
+
+res_qgcomp <- res_legacy %>% bind_rows(res_emerging)
+
+
+# bar plot
+(panel_a <- ggplot(
+  data = res_qgcomp,
+  aes(y = exp(psi), x = type)
 ) +
-  geom_col()+
-  ggtitle("Legacy PFAS") +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
-  xlab(NULL) +
-  ylab("Weights") +
-  theme_classic() +
+  geom_point(shape = 20, size = 2, 
+             position = position_dodge(width = 1)) +
+  geom_errorbar(aes(
+    ymin = exp(lcl_psi),
+    ymax = exp(ucl_psi)),
+    width = 0.2, alpha= 0.7, linewidth = 0.5) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
+  # scale_x_discrete(limits=rev) +
+  # scale_y_continuous(trans = "log2") +
+  ggtitle("Overall Mixture Effect Using qgcomp") +
+  # xlab("Overall\nmixture effect") +
+  ylab("Odds ratio") +
   coord_flip()+
-  theme(
-    axis.text.x = element_text(angle = 90, vjust = 0.4, hjust = 1),
-    text = element_text(size = 9),
-    panel.background = element_rect(fill="white")
-  ))
-
-(panel_b2 <- ggplot(
-  data =  model2$final_weights, 
-  aes(x = reorder(mix_name, mean_weight), y = mean_weight)
-) +
-  geom_col()+
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
-  ggtitle("Emerging PFAS") +
-  coord_flip()+
-  xlab(NULL) +
-  ylab("Weights") +
   theme_classic() +
   theme(
-    axis.text.x = element_text(angle = 90, vjust = 0.4, hjust = 1),
+    # axis.text.y = element_blank()
     text = element_text(size = 9),
-    panel.background = element_rect(fill="white")
+    panel.background = element_rect(fill= "white"),
+    # axis.text.x = element_text(angle = 90),
+    axis.title.y = element_blank()
   ))
-
-(plot_ab <- plot_grid(
-  panel_a,
-  panel_b1,
-  panel_b2,
-  ncol = 1,
-  align = "v",
-  rel_widths = c(0.3, 1, 0.6)
-))
-
 
 ggsave(
-  plot = plot_ab,
+  plot = panel_a,
   fs::path(dir_figures,
-    "Mixture_effect_gwqs.png"
+    "Mixture_effect_qgcomp_categorical_pfas_90th.png"
   ),
-  width = 3.5, height = 6, dpi = 2000
+  width = 3.5, height = 2, dpi = 500
 )
+```
 
+
+## Mixture Analysis - gwqs
+```{r gwqs}
+# model1 <- gwqs(as.formula(paste0(
+#       "case_control",
+#       " ~ ", "wqs+",
+#       paste(covars, collapse = " + "))), 
+#                      mix_name = legacy_scld, 
+#                      data = data_scaled_analysis, 
+#                      q = 4, validation =  0, b = 1000, b1_pos = FALSE, 
+#                      b1_constr = FALSE, family = "binomial", seed = 2016)
+# 
+# model2 <- gwqs(as.formula(paste0(
+#       "case_control",
+#       " ~ ", "wqs+",
+#       paste(covars, collapse = " + "))), 
+#                      mix_name = emerging_scld, 
+#                      data = data_scaled_analysis, 
+#                      q = 4, validation =  0, b = 1000, 
+#                      b1_constr = FALSE, family = "binomial", seed = 2016)
+# 
+# res_legacy_gwqs <- cbind(summary(model1)$coefficients, 
+#                                     confint(model1)) %>% 
+#                                as_tibble(rownames = "term") %>% 
+#   mutate(type = "legacy_pfas") %>% select(type, everything())
+# 
+# res_emerging_gwqs <- cbind(summary(model2)$coefficients, 
+#                                     confint(model2)) %>% 
+#                                as_tibble(rownames = "term") %>% 
+#   mutate(type = "emerging_pfas") %>% select(type, everything())
+# 
+# res_gwqs <- res_legacy_gwqs %>% bind_rows(res_emerging_gwqs) 
+# 
+# # bar plot
+# (panel_a <- ggplot(
+#   data = res_gwqs %>% 
+#     dplyr::filter(term == "wqs"),
+#   aes(y = exp(Estimate), x = type)
+# ) +
+#   geom_point(shape = 20, size = 2, 
+#              position = position_dodge(width = 1)) +
+#   geom_errorbar(aes(
+#     ymin = exp(`2.5 %`),
+#     ymax = exp(`97.5 %`)),
+#     width = 0.2, alpha= 0.7, linewidth = 0.5) +
+#   geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
+#   # scale_x_discrete(limits=rev) +
+#   # scale_y_continuous(trans = "log2") +
+#   ggtitle("Overall Mixture Effect Using gWQS") +
+#   # xlab("Overall\nmixture effect") +
+#   ylab("Odds ratio") +
+#   coord_flip()+
+#   theme_classic() +
+#   theme(
+#     # axis.text.y = element_blank()
+#     text = element_text(size = 9),
+#     panel.background = element_rect(fill= "white"),
+#     # axis.text.x = element_text(angle = 90),
+#     axis.title.y = element_blank()
+#   ))
+# 
+# (panel_b1 <- ggplot(
+#   data =  model1$final_weights, 
+#   aes(x = reorder(mix_name, mean_weight), y = mean_weight)
+# ) +
+#   geom_col()+
+#   ggtitle("Legacy PFAS") +
+#   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+#   xlab(NULL) +
+#   ylab("Weights") +
+#   theme_classic() +
+#   coord_flip()+
+#   theme(
+#     axis.text.x = element_text(angle = 90, vjust = 0.4, hjust = 1),
+#     text = element_text(size = 9),
+#     panel.background = element_rect(fill="white")
+#   ))
+# 
+# (panel_b2 <- ggplot(
+#   data =  model2$final_weights, 
+#   aes(x = reorder(mix_name, mean_weight), y = mean_weight)
+# ) +
+#   geom_col()+
+#   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+#   ggtitle("Emerging PFAS") +
+#   coord_flip()+
+#   xlab(NULL) +
+#   ylab("Weights") +
+#   theme_classic() +
+#   theme(
+#     axis.text.x = element_text(angle = 90, vjust = 0.4, hjust = 1),
+#     text = element_text(size = 9),
+#     panel.background = element_rect(fill="white")
+#   ))
+# 
+# (plot_ab <- plot_grid(
+#   panel_a,
+#   panel_b1,
+#   panel_b2,
+#   ncol = 1,
+#   align = "v",
+#   rel_widths = c(0.3, 1, 0.6)
+# ))
+# 
+# 
 # ggsave(
-#   plot = panel_a,
+#   plot = plot_ab,
 #   fs::path(dir_figures,
 #     "Mixture_effect_gwqs.png"
 #   ),
-#   width = 3.5, height = 3, dpi = 2000
+#   width = 3.5, height = 6, dpi = 2000
 # )
 # 
-# ggsave(
-#   plot = panel_b1,
-#   fs::path(dir_figures,
-#     "legacy_pfas_weights_gwqs.png"
-#   ),
-#   width = 3, height = 2, dpi = 2000
-# )
-# 
-# ggsave(
-#   plot = panel_b2,
-#   fs::path(dir_figures,
-#     "emerging_pfas_weights_gwqs.png"
-#   ),
-#   width = 3, height = 2, dpi = 2000
-# )
+# # ggsave(
+# #   plot = panel_a,
+# #   fs::path(dir_figures,
+# #     "Mixture_effect_gwqs.png"
+# #   ),
+# #   width = 3.5, height = 3, dpi = 2000
+# # )
+# # 
+# # ggsave(
+# #   plot = panel_b1,
+# #   fs::path(dir_figures,
+# #     "legacy_pfas_weights_gwqs.png"
+# #   ),
+# #   width = 3, height = 2, dpi = 2000
+# # )
+# # 
+# # ggsave(
+# #   plot = panel_b2,
+# #   fs::path(dir_figures,
+# #     "emerging_pfas_weights_gwqs.png"
+# #   ),
+# #   width = 3, height = 2, dpi = 2000
+# # )
 ```
 
 ## Mixture Analysis - bwqs
 ```{r bwqs}
-model1_bwqs <-  bwqs(
-    formula = as.formula(paste0(
-      "case_control",
-      " ~ ",
-      paste(covars, collapse = " + "))),
-    mix_name = legacy_scld,
-    data = data_scaled_analysis,
-    q = 4, iter = 1000,
-    family = "binomial",
-    prior = "positive"
-  )
-
-model2_bwqs <-  bwqs(
-    formula = as.formula(paste0(
-      "case_control",
-      " ~ ",
-      paste(covars, collapse = " + "))),
-    mix_name = emerging_scld,
-    data = data_scaled_analysis,
-    q = 4, iter = 1000,
-    family = "binomial",
-    prior = "positive"
-  )
-
-res_legacy_bwqs <- model1_bwqs$summary_fit %>% 
-    as_tibble(., rownames = "coef_name")%>%
-    dplyr::mutate(
-      var_name = gsub("C_|W_X|W_", "", coef_name)
-    )%>%
-  mutate(type = "legacy_pfas") %>% select(type, everything())
-
-res_emerging_bwqs <- model2_bwqs$summary_fit %>% 
-    as_tibble(., rownames = "coef_name")%>%
-    dplyr::mutate(
-      var_name = gsub("C_|W_X|W_", "", coef_name)
-    )%>%
-  mutate(type = "emerging_pfas") %>% select(type, everything())
-
-
-res_bwqs <- res_legacy_bwqs %>% bind_rows(res_emerging_bwqs) 
+# model1_bwqs <-  bwqs(
+#     formula = as.formula(paste0(
+#       "case_control",
+#       " ~ ",
+#       paste(covars, collapse = " + "))),
+#     mix_name = legacy_scld,
+#     data = data_scaled_analysis,
+#     q = 4, iter = 1000,
+#     family = "binomial",
+#     prior = "positive"
+#   )
+# 
+# model2_bwqs <-  bwqs(
+#     formula = as.formula(paste0(
+#       "case_control",
+#       " ~ ",
+#       paste(covars, collapse = " + "))),
+#     mix_name = emerging_scld,
+#     data = data_scaled_analysis,
+#     q = 4, iter = 1000,
+#     family = "binomial",
+#     prior = "positive"
+#   )
+# 
+# res_legacy_bwqs <- model1_bwqs$summary_fit %>% 
+#     as_tibble(., rownames = "coef_name")%>%
+#     dplyr::mutate(
+#       var_name = gsub("C_|W_X|W_", "", coef_name)
+#     )%>%
+#   mutate(type = "legacy_pfas") %>% select(type, everything())
+# 
+# res_emerging_bwqs <- model2_bwqs$summary_fit %>% 
+#     as_tibble(., rownames = "coef_name")%>%
+#     dplyr::mutate(
+#       var_name = gsub("C_|W_X|W_", "", coef_name)
+#     )%>%
+#   mutate(type = "emerging_pfas") %>% select(type, everything())
+# 
+# 
+# res_bwqs <- res_legacy_bwqs %>% bind_rows(res_emerging_bwqs) 
 ```
 

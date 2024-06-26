@@ -72,9 +72,9 @@ data_pfas<- data1 %>% select(pfas_name_analysis, case_control)
   ) %>% 
   ungroup())
 
-# writexl::write_xlsx(pfas_stats, 
-#                     fs::path(dir_result,
-#                              "descriptive_stats_pfas.xlsx"))
+writexl::write_xlsx(pfas_stats,
+                    fs::path(dir_result,
+                             "descriptive_stats_pfas.xlsx"))
 ```
 
 # Descriptive stats split by outcome
