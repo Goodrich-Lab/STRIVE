@@ -25,16 +25,18 @@ source(fs::path(here::here("!load_data.R")))
 
 
 ```{r data summary,warning=FALSE}
-data1 <- data %>% drop_na(case_control) %>% select(-strive_id,-contains("scld")) %>%
+##edited by BS
+data1 <- data %>% drop_na(case_control) %>% dplyr::select(-strive_id, -contains("scld")) %>%
   mutate_at(.vars = covars[-2],
             .funs = ~ as.character(.))
+
 # 
 # table1::table1(~.|case_control, data1)
 ```
 
 # Check percentage of NA for each PFAS
 ```{r percentage of NA, warning=FALSE}
-data_pfas<- data1 %>% select(pfas_name, case_control, -contains("scld"))
+data_pfas<- data1 %>% dplyr::select(pfas_name, case_control, -contains("scld"))
 
 ## Stats----
 pfas_na <- data_pfas %>% 
@@ -44,16 +46,17 @@ pfas_na <- data_pfas %>%
   ungroup()%>%
   arrange(pct_na)
 
-pfas_na
+# print all rows
+print(pfas_na, n=25)
 
 
-pfas_name_analysis <- pfas_na$name[1:12]
+pfas_name_analysis <- pfas_na$name[1:12] # by the cutoff of 25% of missing
 
 ```
 
 # Descriptive stats of PFAS in overall paricipants
 ```{r descriptive stats for pfas, warning=FALSE}
-data_pfas<- data1 %>% select(pfas_name_analysis, case_control)
+data_pfas<- data1 %>% dplyr::select(pfas_name_analysis, case_control)
 
 ## Stats----
 (pfas_stats <- data_pfas %>% 
@@ -79,7 +82,7 @@ writexl::write_xlsx(pfas_stats,
 
 # Descriptive stats split by outcome
 ```{r stats,warning=FALSE, cache=FALSE}
-(data1 %>% select(pfas_name_analysis, covars, case_control) %>%
+(data1 %>% dplyr::select(pfas_name_analysis, covars, case_control) %>%
   tbl_summary(by = case_control,
               type = all_continuous() ~ "continuous2",
               statistic = list(

@@ -27,7 +27,7 @@ source(fs::path(here::here("!load_data.R")))
 set.seed(1234)
 data_scaled_analysis <- data_scaled %>% 
   mutate(case_control = ifelse(case_control =="Healthy", 0, 1))%>%
-  drop_na(case_control)
+  drop_na(case_control) %>% drop_na(age_at_enrollment)
 
 res_legacy5 <- epiomics::owas_qgcomp(data_scaled_analysis,
                              expnms = legacy_scld,
@@ -38,11 +38,11 @@ res_legacy5 <- epiomics::owas_qgcomp(data_scaled_analysis,
                           ) %>%
   mutate(odds_ratio = exp(psi),
          exp_ci_low = exp(lcl_psi),
-         exp_ci_high = exp(ucl_psi))%>%
-  mutate(type = "legacy_pfas") %>% select(type, everything())%>%
-  mutate(parameter = "q = 5")%>%
-  mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
-  select(parameter,type,odds_ci, everything()) 
+         exp_ci_high = exp(ucl_psi),
+         type = "legacy_pfas",
+         parameter = "q = 5",
+         odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high, n.digits = 3)) %>%
+  dplyr::select(parameter, type, odds_ci, everything()) 
 
 # res_legacy <- res_legacy3 %>% bind_rows(res_legacy4) %>% bind_rows(res_legacy5) %>%
 #   bind_rows(res_legacy6) %>% bind_rows(res_legacy7)%>% bind_rows(res_legacy8)%>% mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high, n.digits = 3)) %>%
@@ -58,10 +58,10 @@ res_emerging5 <- epiomics::owas_qgcomp(data_scaled_analysis,
   mutate(odds_ratio = exp(psi),
          exp_ci_low = exp(lcl_psi),
          exp_ci_high = exp(ucl_psi))%>%
-  mutate(type = "emerging_pfas") %>% select(type, everything()) %>%
+  mutate(type = "emerging_pfas") %>% dplyr::select(type, everything()) %>%
   mutate(parameter = "q = 5")%>%
   mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
-  select(parameter,type,odds_ci, everything()) 
+  dplyr::select(parameter,type,odds_ci, everything()) 
 
 qgcomp_output <- qgcomp.noboot(as.formula(paste("case_control~",
                                                 str_c(emerging_scld, collapse = "+") ,
@@ -70,7 +70,9 @@ qgcomp_output <- qgcomp.noboot(as.formula(paste("case_control~",
                                expnms=emerging_scld, # Name of Mixtures
                                data=data_scaled_analysis,
                                family=binomial(), # family=binomial() for logistic
-                               q = 5)
+                               q = 5,
+#uses a Bayesian approach to handle identifiability issues caused by highly correlated variables
+                               bayes = TRUE)
 
 plot(qgcomp_output)
 

@@ -22,12 +22,12 @@ source(fs::path(here::here("!directories.R")))
 source(fs::path(here::here("!load_data.R")))
 ```
 
-## Analysis1. Logistic regression 
+## Analysis1. Logistic regression - edited Covars
 **Outcome: case vs control**
 
 **Exposure: normalized pfas**
 
-**Covars: source, age, sex, race/eth, rural, smoking**
+**Covars: source, age, sex, race, rural, smoking, drinking)**
 
 **Analysis: logistic regression**
 
