@@ -10,7 +10,6 @@ data <- readxl::read_xlsx(fs::path(
          rural = ifelse(rural == 1, "Living in rural area", "Living in Metro area"),
          smoking = ifelse(smoking == 1, "Smoke or use vape", "Don't smoke or use vape"),
          case_control = ifelse(case_control == 1, "With cirrhosis", "Healthy"),
-         
          ## added by BS
          ethnicity = ifelse(ethnicity == 1, "Hispanic", "Not Hispanic"),
          sq_drink_alcohol = case_when(
@@ -29,8 +28,12 @@ data <- readxl::read_xlsx(fs::path(
          
          )%>%
   mutate(rural = ifelse(is.na(rural), "Unknown/Not Reported", rural),
-         smoking = ifelse(is.na(smoking), "Unknown/Not Reported", smoking),
-         race_eth_label = ifelse(is.na(race_eth_label), "Unknown", race_eth_label))
+         smoking = ifelse(is.na(smoking), "Unknown/Not Reported", smoking))%>%
+  ## added or edited by BS
+  mutate(race_eth_label = ifelse(is.na(race_eth_label), "Unknown/Not Reported", race_eth_label),
+         race_final_label = ifelse(is.na(race_final_label), "Unknown/Not Reported", race_final_label),
+         sq_average_drink_per_day = ifelse(is.na(sq_average_drink_per_day), "Unknown/Not Reported", sq_average_drink_per_day))
+## to here
 pfas_name <- colnames(data)[3:27]
 
 # For the analysis, only focusing on the PFAS with <25% below LOD
@@ -69,14 +72,7 @@ data_imputed <- data %>%
 # Adding normalized PFAS
 data_scaled <- data_imputed %>% 
   mutate_at(.vars = pfas_name_analysis,
-            .funs = list(scld = ~scale(.)%>% as.vector(.)))%>%
-  ## added or edited by BS
-  mutate(smoking = ifelse(is.na(smoking), "Unknown", smoking),
-         rural = ifelse(is.na(rural), "Unknown", rural),
-         race_eth_label = ifelse(is.na(race_eth_label), "Unknown", race_eth_label),
-         race_final_label = ifelse(is.na(race_final_label), "Unknown", race_final_label),
-         sq_average_drink_per_day = ifelse(is.na(sq_average_drink_per_day), "Unknown", sq_average_drink_per_day))
-  ## to here
+            .funs = list(scld = ~scale(.)%>% as.vector(.)))
 
 pfas_name_scld <- paste0(pfas_name_analysis,"_", "scld")
 legacy_scld <- paste0(legacy,"_", "scld")

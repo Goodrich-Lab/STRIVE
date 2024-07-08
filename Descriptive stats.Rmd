@@ -24,8 +24,6 @@ source(fs::path(here::here("!load_cleaned_data.R")))
 
 
 ```{r data summary,warning=FALSE}
-<<<<<<< HEAD
-
 data <- readxl::read_xlsx(fs::path(
   dir_data,
   "STRIVE_PFAS_demo_28jun24.xlsx")) %>% 
@@ -33,19 +31,36 @@ data <- readxl::read_xlsx(fs::path(
   mutate(sex = ifelse(sex == 1, "Male", "Female"),
          rural = ifelse(rural == 1, "Living in rural area", "Living in Metro area"),
          smoking = ifelse(smoking == 1, "Smoke or use vape", "Don't smoke or use vape"),
-         case_control = ifelse(case_control == 1, "With cirrhosis", "Healthy"))%>%
+         case_control = ifelse(case_control == 1, "With cirrhosis", "Healthy"),
+         ## added by BS
+         ethnicity = ifelse(ethnicity == 1, "Hispanic", "Not Hispanic"),
+         sq_drink_alcohol = case_when(
+           sq_drink_alcohol == 1 ~ "Yes, current drinker",
+           sq_drink_alcohol == 2 ~ "No, former drinker (stopped)",
+           sq_drink_alcohol == 3 ~ "No, never drinker",
+           TRUE ~ "Unknown/Not Reported"), 
+         sq_average_drink_per_day = case_when(
+             sq_average_drink_per_day == 1 ~ "Less than 1 alcoholic drink per day",
+             sq_average_drink_per_day == 2 ~ "1-2 alcoholic drinks per day",
+             sq_average_drink_per_day == 3 ~ "3-4 alcoholic drinks per day",
+             sq_average_drink_per_day == 4 ~ "More than 4 alcoholic drinks per day",
+             TRUE ~ "Unknown/Not Reported"
+           )
+         ## to here 
+         
+         )%>%
   mutate(rural = ifelse(is.na(rural), "Unknown/Not Reported", rural),
          smoking = ifelse(is.na(smoking), "Unknown/Not Reported", smoking))%>%
-  drop_na(case_control)
+  ## added or edited by BS
+  mutate(race_eth_label = ifelse(is.na(race_eth_label), "Unknown/Not Reported", race_eth_label),
+         race_final_label = ifelse(is.na(race_final_label), "Unknown/Not Reported", race_final_label),
+         sq_average_drink_per_day = ifelse(is.na(sq_average_drink_per_day), "Unknown/Not Reported", sq_average_drink_per_day))
 
-data1 <- data %>% drop_na(case_control) %>% dplyr::select(-strive_id, -contains("scld")) %>%
-  mutate_at(.vars = covars[-2],
-            .funs = ~ as.character(.))
 ```
 
 # Check percentage of NA for each PFAS
 ```{r percentage of NA, warning=FALSE}
-data_pfas<- data1 %>% dplyr::select(pfas_name, case_control, -contains("scld"))
+data_pfas<- data %>% dplyr::select(pfas_name, case_control, -contains("scld"))
 
 ## Stats----
 pfas_na <- data_pfas %>% 
@@ -68,7 +83,7 @@ pfas_name_analysis <- pfas_na$name[1:12] # by the cutoff of 25% of missing
 
 # Descriptive stats of PFAS in overall paricipants
 ```{r descriptive stats for pfas, warning=FALSE}
-data_pfas<- data1 %>% dplyr::select(pfas_name_analysis, case_control)
+data_pfas<- data %>% dplyr::select(pfas_name_analysis, case_control)
 
 ## Stats----
 (pfas_stats <- data_pfas %>% 
@@ -94,7 +109,7 @@ data_pfas<- data1 %>% dplyr::select(pfas_name_analysis, case_control)
 
 # Descriptive stats split by outcome
 ```{r stats,warning=FALSE, cache=FALSE}
-(data1 %>% select(pfas_name_analysis, covars,race_final_label,
+(data %>% dplyr::select(pfas_name_analysis, covars,race_final_label,
                   ethnicity,contains("sq_"),contains("alt"), 
                   contains("ast"), contains("trig"),
                   case_control) %>%
