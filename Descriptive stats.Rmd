@@ -19,19 +19,28 @@ knitr::opts_chunk$set(echo = TRUE)
 
 source(fs::path(here::here("!libraries.R")))
 source(fs::path(here::here("!directories.R")))
-source(fs::path(here::here("!load_data.R")))
-
+source(fs::path(here::here("!load_cleaned_data.R")))
 ```
 
 
 ```{r data summary,warning=FALSE}
-##edited by BS
+<<<<<<< HEAD
+
+data <- readxl::read_xlsx(fs::path(
+  dir_data,
+  "STRIVE_PFAS_demo_28jun24.xlsx")) %>% 
+  janitor::clean_names()%>%
+  mutate(sex = ifelse(sex == 1, "Male", "Female"),
+         rural = ifelse(rural == 1, "Living in rural area", "Living in Metro area"),
+         smoking = ifelse(smoking == 1, "Smoke or use vape", "Don't smoke or use vape"),
+         case_control = ifelse(case_control == 1, "With cirrhosis", "Healthy"))%>%
+  mutate(rural = ifelse(is.na(rural), "Unknown/Not Reported", rural),
+         smoking = ifelse(is.na(smoking), "Unknown/Not Reported", smoking))%>%
+  drop_na(case_control)
+
 data1 <- data %>% drop_na(case_control) %>% dplyr::select(-strive_id, -contains("scld")) %>%
   mutate_at(.vars = covars[-2],
             .funs = ~ as.character(.))
-
-# 
-# table1::table1(~.|case_control, data1)
 ```
 
 # Check percentage of NA for each PFAS
@@ -49,6 +58,9 @@ pfas_na <- data_pfas %>%
 # print all rows
 print(pfas_na, n=25)
 
+# writexl::write_xlsx(pfas_na,
+#                     fs::path(dir_result,
+#                              "percent of na for PFAS.xlsx"))
 
 pfas_name_analysis <- pfas_na$name[1:12] # by the cutoff of 25% of missing
 
@@ -75,14 +87,17 @@ data_pfas<- data1 %>% dplyr::select(pfas_name_analysis, case_control)
   ) %>% 
   ungroup())
 
-writexl::write_xlsx(pfas_stats,
-                    fs::path(dir_result,
-                             "descriptive_stats_pfas.xlsx"))
+# writexl::write_xlsx(pfas_stats,
+#                     fs::path(dir_result,
+#                              "descriptive_stats_pfas.xlsx"))
 ```
 
 # Descriptive stats split by outcome
 ```{r stats,warning=FALSE, cache=FALSE}
-(data1 %>% dplyr::select(pfas_name_analysis, covars, case_control) %>%
+(data1 %>% select(pfas_name_analysis, covars,race_final_label,
+                  ethnicity,contains("sq_"),contains("alt"), 
+                  contains("ast"), contains("trig"),
+                  case_control) %>%
   tbl_summary(by = case_control,
               type = all_continuous() ~ "continuous2",
               statistic = list(
