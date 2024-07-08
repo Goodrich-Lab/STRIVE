@@ -2,7 +2,6 @@
 # library(tidylog)
 
 # Read Data ---------------------------------------------------------------
-
 data <- readxl::read_xlsx(fs::path(
   dir_data,
   "STRIVE_PFAS_demo_28jun24.xlsx")) %>% 
@@ -30,9 +29,8 @@ data <- readxl::read_xlsx(fs::path(
          
          )%>%
   mutate(rural = ifelse(is.na(rural), "Unknown/Not Reported", rural),
-         smoking = ifelse(is.na(smoking), "Unknown/Not Reported", smoking))%>%
-  drop_na(case_control)
-
+         smoking = ifelse(is.na(smoking), "Unknown/Not Reported", smoking),
+         race_eth_label = ifelse(is.na(race_eth_label), "Unknown", race_eth_label))
 pfas_name <- colnames(data)[3:27]
 
 # For the analysis, only focusing on the PFAS with <25% below LOD
@@ -52,14 +50,11 @@ emerging <- c("pfbs", "pf_pe_a","pf_pe_s", "pfba", "pf_hx_a")
 
 emerging_cat <- c("pfbs_median", "pf_pe_a_median","pf_pe_s_median", "pfba_detected", "pf_hx_a_detected")
 
-# emerging <- c("pfbs", "pf_pe_a","pf_pe_s", "x9cl_pf3ons")
 
 ## added or edited by BS
 covars <- c("source", "age_at_enrollment","sex", 
             "rural", "smoking","race_final_label", "sq_average_drink_per_day")
 
-covars_analysis <- covars[1:7]
-## to here
 
 # Imputation of PFAS: min(pfas concentration)/sqrt(2)
 data_imputed <- data %>%
@@ -67,10 +62,8 @@ data_imputed <- data %>%
             .funs = ~ifelse(is.na(.),unique(sort(.))[1]/sqrt(2),.))%>%
   mutate_at(.vars = c("pfba", "pf_hx_a"),
             .funs = list(detected = ~ifelse(. == sort(.)[1], 0, 1)))%>%
-  # mutate_at(.vars = c(legacy, emerging[-c(4,5)]),
-  #           .funs = list(median = ~ifelse(. < median(.), 0, 1)))
   mutate_at(.vars = c(legacy, emerging[-c(4,5)]),
-            .funs = list(median = ~ifelse(. < quantile(.,0.90), 0, 1)))
+            .funs = list(median = ~ifelse(. <median(.), 0, 1)))
 
 
 # Adding normalized PFAS
@@ -90,4 +83,4 @@ legacy_scld <- paste0(legacy,"_", "scld")
 emerging_scld <- paste0(emerging, "_", "scld")
 # 
 
-
+write_csv(data_scaled, fs::path(dir_data, "cleaned_data/STRIVE_cleaned_data.csv"))
