@@ -1,10 +1,12 @@
 # Set up data for analysis
 # library(tidylog)
+source(fs::path(here::here("!libraries.R")))
+source(fs::path(here::here("!directories.R")))
 
 # Read Data ---------------------------------------------------------------
 data <- readxl::read_xlsx(fs::path(
   dir_data,
-  "STRIVE_PFAS_demo_28jun24.xlsx")) %>% 
+  "STRIVE_PFAS_demo_08july24.xlsx")) %>% 
   janitor::clean_names()%>%
   mutate(sex = ifelse(sex == 1, "Male", "Female"),
          rural = ifelse(rural == 1, "Living in rural area", "Living in Metro area"),
@@ -24,11 +26,20 @@ data <- readxl::read_xlsx(fs::path(
              sq_average_drink_per_day == 4 ~ "More than 4 alcoholic drinks per day",
              TRUE ~ "Unknown/Not Reported"
            )
-         ## to here 
-         
+         ## to here
          )%>%
-  mutate(rural = ifelse(is.na(rural), "Unknown/Not Reported", rural),
-         smoking = ifelse(is.na(smoking), "Unknown/Not Reported", smoking))%>%
+  mutate_at(.vars = c("sq_self_hep_b","sq_self_hep_c","supp_meds_tylenol",
+                      "supp_meds_steroids","sq_water_well","sq_water_tap_unfiltered",
+                      "sq_water_house_filtration","sq_water_faucet_filter",
+                      "sq_water_charcoal_filter","sq_water_bottled",
+                      "sq_water_none","sq_water_other_type","sq_water_dont_know"),
+            .funs = ~ifelse(. == 1, "Yes", "No"))%>%
+  mutate_at(.vars = c("rural", "smoking", "ethnicity", "sq_self_hep_b","sq_self_hep_c","supp_meds_tylenol",
+                      "supp_meds_steroids","sq_water_well","sq_water_tap_unfiltered",
+                      "sq_water_house_filtration","sq_water_faucet_filter",
+                      "sq_water_charcoal_filter","sq_water_bottled",
+                      "sq_water_none","sq_water_other_type","sq_water_dont_know"),
+            .funs = ~ifelse(is.na(.), "Unknown/Not Reported", .))%>%
   ## added or edited by BS
   mutate(race_eth_label = ifelse(is.na(race_eth_label), "Unknown/Not Reported", race_eth_label),
          race_final_label = ifelse(is.na(race_final_label), "Unknown/Not Reported", race_final_label),
@@ -54,11 +65,6 @@ emerging <- c("pfbs", "pf_pe_a","pf_pe_s", "pfba", "pf_hx_a")
 emerging_cat <- c("pfbs_median", "pf_pe_a_median","pf_pe_s_median", "pfba_detected", "pf_hx_a_detected")
 
 
-## added or edited by BS
-covars <- c("source", "age_at_enrollment","sex", 
-            "rural", "smoking","race_final_label", "sq_average_drink_per_day")
-
-
 # Imputation of PFAS: min(pfas concentration)/sqrt(2)
 data_imputed <- data %>%
   mutate_at(.vars = pfas_name_analysis,
@@ -77,6 +83,15 @@ data_scaled <- data_imputed %>%
 pfas_name_scld <- paste0(pfas_name_analysis,"_", "scld")
 legacy_scld <- paste0(legacy,"_", "scld")
 emerging_scld <- paste0(emerging, "_", "scld")
-# 
 
-write_csv(data_scaled, fs::path(dir_data, "cleaned_data/STRIVE_cleaned_data.csv"))
+# Adding new cirrhosis outcome defined by AST/ALT (Cirrhosis: AST/ALT ratio > 1; Health: AST/ALT ratio <= 1)
+data_scaled1 <- data_scaled %>%
+  mutate(`AST/ALT` = ast_u_l/alt_u_l,
+         cirrhosis = ifelse(`AST/ALT` > 1, "With cirrhosis", "Healthy"))
+
+write_csv(data_scaled1, fs::path(dir_data, "cleaned_data/STRIVE_cleaned_data.csv"))
+
+rm(data)
+rm(data_imputed)
+rm(data_scaled)
+rm(data_scaled1)

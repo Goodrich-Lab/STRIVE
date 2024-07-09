@@ -19,30 +19,32 @@ knitr::opts_chunk$set(echo = TRUE,warning=FALSE, message = FALSE, cache=FALSE,co
 source(fs::path(here::here("!libraries.R")))
 source(fs::path(here::here("!directories.R")))
 # source(fs::path(here::here("functions.R")))
-source(fs::path(here::here("!load_data.R")))
+source(fs::path(here::here("!load_cleaned_data.R")))
 ```
 
 ## Mixture Analysis-qgcomp(continuous PFAS)
 ```{r qgcomp}
 set.seed(1234)
-data_scaled_analysis <- data_scaled %>% 
+
+covars <- c("source","age_at_enrollment", "sex", "race_final_label","rural", "smoking","sq_drink_alcohol")
+
+data_scaled_analysis <- data %>% 
   mutate(case_control = ifelse(case_control =="Healthy", 0, 1))%>%
-  drop_na(case_control) %>% drop_na(age_at_enrollment)
+  drop_na(case_control, all_of(covars))
 
 res_legacy5 <- epiomics::owas_qgcomp(data_scaled_analysis,
                              expnms = legacy_scld,
                              omics = "case_control",
                              covars = covars,
                              family = "binomial",
-                             q = 5
-                          ) %>%
+                             q = 10) %>%
   mutate(odds_ratio = exp(psi),
          exp_ci_low = exp(lcl_psi),
-         exp_ci_high = exp(ucl_psi),
-         type = "legacy_pfas",
-         parameter = "q = 5",
-         odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high, n.digits = 3)) %>%
-  dplyr::select(parameter, type, odds_ci, everything()) 
+         exp_ci_high = exp(ucl_psi))%>%
+  mutate(type = "legacy_pfas") %>% dplyr::select(type, everything())%>%
+  mutate(parameter = "q = 10")%>%
+  mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
+  dplyr::select(parameter,type,odds_ci, everything()) 
 
 # res_legacy <- res_legacy3 %>% bind_rows(res_legacy4) %>% bind_rows(res_legacy5) %>%
 #   bind_rows(res_legacy6) %>% bind_rows(res_legacy7)%>% bind_rows(res_legacy8)%>% mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high, n.digits = 3)) %>%
@@ -53,13 +55,13 @@ res_emerging5 <- epiomics::owas_qgcomp(data_scaled_analysis,
                              omics = "case_control",
                              covars = covars,
                              family = "binomial",
-                             q = 5
+                             q = 10
                           ) %>%
   mutate(odds_ratio = exp(psi),
          exp_ci_low = exp(lcl_psi),
          exp_ci_high = exp(ucl_psi))%>%
   mutate(type = "emerging_pfas") %>% dplyr::select(type, everything()) %>%
-  mutate(parameter = "q = 5")%>%
+  mutate(parameter = "q = 10")%>%
   mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
   dplyr::select(parameter,type,odds_ci, everything()) 
 
@@ -70,9 +72,7 @@ qgcomp_output <- qgcomp.noboot(as.formula(paste("case_control~",
                                expnms=emerging_scld, # Name of Mixtures
                                data=data_scaled_analysis,
                                family=binomial(), # family=binomial() for logistic
-                               q = 5,
-#uses a Bayesian approach to handle identifiability issues caused by highly correlated variables
-                               bayes = TRUE)
+                               q = 10)
 
 plot(qgcomp_output)
 
@@ -97,7 +97,7 @@ res_qgcomp <- res_legacy5 %>% bind_rows(res_emerging5)
   geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
   # scale_x_discrete(limits=rev) +
   # scale_y_continuous(trans = "log2") +
-  ggtitle("Overall Mixture Effect Using qgcomp") +
+  ggtitle("Overall Mixture Effect on case status using qgcomp") +
   # xlab("Overall\nmixture effect") +
   ylab("Odds ratio") +
   coord_flip()+
@@ -107,7 +107,8 @@ res_qgcomp <- res_legacy5 %>% bind_rows(res_emerging5)
     text = element_text(size = 9),
     panel.background = element_rect(fill= "white"),
     # axis.text.x = element_text(angle = 90),
-    axis.title.y = element_blank()
+    axis.title.y = element_blank(),
+    plot.title = element_text(size = 15, hjust = 0.5)
   ))
 
 ggsave(
@@ -119,46 +120,152 @@ ggsave(
 )
 ```
 
+# Mixture analysis using AST_ALT endpoint
+```{r}
+# Set seed for reproducibility
+set.seed(1234)
+
+# Prepare the data
+data_scaled_analysis <- data %>% 
+  drop_na("AST/ALT", all_of(covars))
+
+# Perform OWAS analysis using qgcomp on legacy PFAS
+res_legacy <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                     expnms = legacy_scld,
+                                     omics = "AST/ALT",
+                                     covars = covars,
+                                     family = "gaussian",  # Gaussian for linear regression
+                                     q = 10) %>%
+  mutate(coef = psi,
+         ci_low = lcl_psi,
+         ci_high = ucl_psi) %>%
+  mutate(type = "legacy_pfas") %>%
+  dplyr::select(type, everything()) %>%
+  mutate(parameter = "q = 10",
+         coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3)) %>%
+  dplyr::select(parameter, type, coef_ci, everything())
+
+# Perform OWAS analysis using qgcomp on emerging PFAS
+res_emerging <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                       expnms = emerging_scld,
+                                       omics = "AST/ALT",
+                                       covars = covars,
+                                       family = "gaussian",  # Gaussian for linear regression
+                                       q = 10) %>%
+  mutate(coef = psi,
+         ci_low = lcl_psi,
+         ci_high = ucl_psi) %>%
+  mutate(type = "emerging_pfas") %>%
+  dplyr::select(type, everything()) %>%
+  mutate(parameter = "q = 10",
+         coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3)) %>%
+  dplyr::select(parameter, type, coef_ci, everything())
+
+# Plotting function
+plot_pfas <- function(res, title) {
+  ggplot(res, aes(x = coef, y = fct_reorder(type, coef), color = sig)) +
+    geom_errorbar(aes(xmin = ci_low, xmax = ci_high), width = 0, position = position_dodge(width = 1)) +
+    geom_point(size = 1, position = position_dodge(width = 1)) + 
+    geom_vline(xintercept = 0, linetype = 2, color = "grey") +  
+    labs(
+      title = title,
+      x = "Coefficient (95% CI)", 
+      y= "PFAS"
+    ) +
+    theme(
+      legend.position = "bottom",
+      panel.background = element_rect(fill="white"), 
+      strip.background = element_rect(fill = "white"),
+      strip.text.y = element_text(angle = 0, hjust = 0),
+      text = element_text(size = 15),
+      axis.title.y = element_blank(),
+      axis.line.x = element_line(color = "black"),
+      axis.line.y = element_line(color = "black"),
+      plot.title = element_text(size = 15, hjust = 0.5)
+    ) +
+    scale_color_manual(values = c("black", "red"))
+}
+
+# Plot results for legacy PFAS
+plot_legacy <- plot_pfas(res_legacy, "Effect of Legacy PFAS on AST/ALT Ratio")
+
+# Plot results for emerging PFAS
+plot_emerging <- plot_pfas(res_emerging, "Effect of Emerging PFAS on AST/ALT Ratio")
+
+
+# Bind results for bar plot
+res_qgcomp <- res_legacy %>% bind_rows(res_emerging)
+
+# Bar plot
+(panel_a <- ggplot(
+  data = res_qgcomp,
+  aes(y = coef, x = type)
+) +
+  geom_point(shape = 20, size = 2, position = position_dodge(width = 1)) +
+  geom_errorbar(aes(
+    ymin = ci_low,
+    ymax = ci_high),
+    width = 0.2, alpha = 0.7, linewidth = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  ggtitle("Overall Mixture Effect on AST/ALT using qgcomp") +
+  ylab("Coefficient (95% CI)") +
+  coord_flip() +
+  theme_classic() +
+  theme(
+    text = element_text(size = 9),
+    panel.background = element_rect(fill= "white"),
+    axis.title.y = element_blank(),
+    plot.title = element_text(size = 15, hjust = 0.5)
+  ))
+
+ggsave(
+  plot = panel_a,
+  filename = fs::path(dir_figures, "Mixture_effect_qgcomp.png"),
+  width = 3.5, height = 2, dpi = 500
+)
+
+```
+
 
 
 ## Mixture Analysis-qgcomp(categorical PFAS)
 ```{r qgcomp}
-set.seed(1234)
-data_scaled_analysis <- data_scaled %>% 
-  mutate(case_control = ifelse(case_control =="Healthy", 0, 1))%>%
-  drop_na(case_control)
+#set.seed(1234)
+#data_scaled_analysis <- data_scaled %>% 
+ # mutate(case_control = ifelse(case_control =="Healthy", 0, 1))%>%
+#  drop_na(case_control)
 
-res_legacy <- epiomics::owas_qgcomp(data_scaled_analysis,
-                             expnms = legacy_cat,
-                             omics = "case_control",
-                             covars = covars,
-                             family = "binomial",
-                             q = NULL
-                          ) %>%
-  mutate(odds_ratio = exp(psi),
-         exp_ci_low = exp(lcl_psi),
-         exp_ci_high = exp(ucl_psi))%>%
-  mutate(type = "legacy_pfas") %>% select(type, everything())%>%
-  mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
-  select(type,odds_ci, everything()) 
+#res_legacy <- epiomics::owas_qgcomp(data_scaled_analysis,
+ #                            expnms = legacy_cat,
+  #                           omics = "case_control",
+   #                          covars = covars,
+    #                         family = "binomial",
+     #                        q = NULL
+      #                    ) %>%
+  #mutate(odds_ratio = exp(psi),
+   #      exp_ci_low = exp(lcl_psi),
+    #     exp_ci_high = exp(ucl_psi))%>%
+  #mutate(type = "legacy_pfas") %>% select(type, everything())%>%
+  #mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
+  #select(type,odds_ci, everything()) 
 
 # res_legacy <- res_legacy3 %>% bind_rows(res_legacy4) %>% bind_rows(res_legacy5) %>%
 #   bind_rows(res_legacy6) %>% bind_rows(res_legacy7)%>% bind_rows(res_legacy8)%>% mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high, n.digits = 3)) %>%
 #   select(parameter,type,odds_ci, everything()) 
 
-res_emerging <- epiomics::owas_qgcomp(data_scaled_analysis,
-                             expnms = emerging_cat,
-                             omics = "case_control",
-                             covars = covars,
-                             family = "binomial",
-                             q = NULL
-                          ) %>%
-  mutate(odds_ratio = exp(psi),
-         exp_ci_low = exp(lcl_psi),
-         exp_ci_high = exp(ucl_psi))%>%
-  mutate(type = "emerging_pfas") %>% select(type, everything()) %>%
-  mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
-  select(type,odds_ci, everything()) 
+#res_emerging <- epiomics::owas_qgcomp(data_scaled_analysis,
+                    #         expnms = emerging_cat,
+                     #        omics = "case_control",
+                    #         covars = covars,
+                     #        family = "binomial",
+                      #       q = NULL
+                       #   ) %>%
+  #mutate(odds_ratio = exp(psi),
+   #      exp_ci_low = exp(lcl_psi),
+    #     exp_ci_high = exp(ucl_psi))%>%
+  #mutate(type = "emerging_pfas") %>% select(type, everything()) %>%
+  #mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
+  #select(type,odds_ci, everything()) 
 
 # qgcomp_output <- qgcomp.noboot(as.formula(paste("case_control~",
 #                                                 str_c(emerging_scld, collapse = "+") ,
@@ -175,43 +282,43 @@ res_emerging <- epiomics::owas_qgcomp(data_scaled_analysis,
 #   bind_rows(res_emerging6) %>% bind_rows(res_emerging7)%>%
 #   bind_rows(res_emerging8)
 
-res_qgcomp <- res_legacy %>% bind_rows(res_emerging)
+#res_qgcomp <- res_legacy %>% bind_rows(res_emerging)
 
 
 # bar plot
-(panel_a <- ggplot(
-  data = res_qgcomp,
-  aes(y = exp(psi), x = type)
-) +
-  geom_point(shape = 20, size = 2, 
-             position = position_dodge(width = 1)) +
-  geom_errorbar(aes(
-    ymin = exp(lcl_psi),
-    ymax = exp(ucl_psi)),
-    width = 0.2, alpha= 0.7, linewidth = 0.5) +
-  geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
+#(panel_a <- ggplot(
+ # data = res_qgcomp,
+  #aes(y = exp(psi), x = type)
+#) +
+ # geom_point(shape = 20, size = 2, 
+  #           position = position_dodge(width = 1)) +
+  #geom_errorbar(aes(
+   # ymin = exp(lcl_psi),
+    #ymax = exp(ucl_psi)),
+    #width = 0.2, alpha= 0.7, linewidth = 0.5) +
+  #geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
   # scale_x_discrete(limits=rev) +
   # scale_y_continuous(trans = "log2") +
-  ggtitle("Overall Mixture Effect Using qgcomp") +
+ # ggtitle("Overall Mixture Effect Using qgcomp") +
   # xlab("Overall\nmixture effect") +
-  ylab("Odds ratio") +
-  coord_flip()+
-  theme_classic() +
-  theme(
+  #ylab("Odds ratio") +
+  #coord_flip()+
+  #theme_classic() +
+  #theme(
     # axis.text.y = element_blank()
-    text = element_text(size = 9),
-    panel.background = element_rect(fill= "white"),
+   # text = element_text(size = 9),
+    #panel.background = element_rect(fill= "white"),
     # axis.text.x = element_text(angle = 90),
-    axis.title.y = element_blank()
-  ))
+    #axis.title.y = element_blank()
+  #))
 
-ggsave(
-  plot = panel_a,
-  fs::path(dir_figures,
-    "Mixture_effect_qgcomp_categorical_pfas_90th.png"
-  ),
-  width = 3.5, height = 2, dpi = 500
-)
+#ggsave(
+ # plot = panel_a,
+  #fs::path(dir_figures,
+  #  "Mixture_effect_qgcomp_categorical_pfas_90th.png"
+  #),
+  #width = 3.5, height = 2, dpi = 500
+#)
 ```
 
 

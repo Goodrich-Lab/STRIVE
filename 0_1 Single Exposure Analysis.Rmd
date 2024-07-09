@@ -19,20 +19,22 @@ knitr::opts_chunk$set(echo = TRUE,warning=FALSE, message = FALSE, cache=FALSE,co
 source(fs::path(here::here("!libraries.R")))
 source(fs::path(here::here("!directories.R")))
 # source(fs::path(here::here("functions.R")))
-source(fs::path(here::here("!load_data.R")))
+source(fs::path(here::here("!load_cleaned_data.R")))
 ```
 
-## Analysis1. Logistic regression - edited Covars
+## Analysis1. Logistic regression 
 **Outcome: case vs control**
 
 **Exposure: normalized pfas**
 
-**Covars: source, age, sex, race, rural, smoking, drinking)**
+**Covars: source, age, sex, race, rural, smoking, alcohol**
 
 **Analysis: logistic regression**
 
 ```{r analysis}
-res <- epiomics::owas(data_scaled,
+covars <- c("source","age_at_enrollment", "sex", "race_final_label","rural", "smoking","sq_drink_alcohol")
+
+res <- epiomics::owas(data,
                           var = "case_control", 
                           omics = pfas_name_scld,
                           covars = covars,
@@ -66,13 +68,11 @@ res1 <- res |>
                                grepl("pfoa", feature_name) ~ "PFOA",
                                grepl("pf3ons", feature_name) ~ "9CL-PF3ONS",))
 
-writexl::write_xlsx(res1,
-                    fs::path(dir_result,
-                             "exposure outcome association.xlsx"))
-```
+#writexl::write_xlsx(res1,
+ #                   fs::path(dir_result,
+  #                           "exposure outcome association.xlsx"))
 
 ## Fig. PFAS and outcome
-```{r plot}
 (plot <-  ggplot(res1,
        aes(x = odds_ratio, y = fct_reorder(plot_name, odds_ratio), color = sig)) +
   geom_errorbar(aes(xmin = exp_ci_low, xmax = exp_ci_high),
@@ -93,11 +93,174 @@ writexl::write_xlsx(res1,
   # scale_color_manual(values = c( "black","purple","red")))
   scale_color_manual(values = c( "black","red")))
 
-ggsave(filename = fs::path(dir_figures,
-                           "Fig1. PFAS main Effect with covariates Imputed.jpeg"),
+ggsave(filename = fs::path(dir_figures,"Fig. Effect of each PFAS on case_control status.jpeg"),width = 8,height = 8, dpi = 300, bg = "white")
+```
+
+## Same results by group of PFAS (Emerging vs Legacy)
+```{r}
+# Categorize PFAS into "emerging" and "legacy" based on `pfas_name_scld`
+res1 <- res1 %>%
+  mutate(group = case_when(
+    grepl("pfbs|pf_pe_a|pf_pe_s|pfba|pf_hx_a", feature_name) ~ "Emerging",
+    TRUE ~ "Legacy"
+  ))
+
+# Create separate plots for "emerging" and "legacy" groups
+plot <- ggplot(res1, aes(x = odds_ratio, y = fct_reorder(plot_name, odds_ratio), color = sig)) +
+  geom_errorbar(aes(xmin = exp_ci_low, xmax = exp_ci_high),
+                width = 0, position = position_dodge(width = 1)) +
+  geom_point(size = 1, position = position_dodge(width = 1)) + 
+  geom_vline(xintercept = 1, linetype = 2, color = "grey") +
+  xlab("Odds Ratio (95% CI)") +
+  theme(
+    legend.position = "bottom",
+    panel.background = element_rect(fill="white"), 
+    strip.background = element_rect(fill = "white"),
+    strip.text.y = element_text(angle = 0, hjust = 0),
+    text = element_text(size = 15),
+    axis.title.y = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black")
+  ) +
+  ylab("OR (95% CI) per\ndoubling of PFAS") +
+  scale_color_manual(values = c("black", "red"))
+
+# Facet by 'group' to show separate panels for "emerging" and "legacy" groups
+plot + facet_wrap(~ group, scales = "free_y")
+
+# Save the plot
+ggsave(filename = fs::path(dir_figures, "Fig. Effect of each PFAS on case/control status by PFAS group.jpeg"),
+       plot = plot + facet_wrap(~ group, scales = "free_y"),
        width = 8,
        height = 8,
        dpi = 300,
        bg = "white")
+
+```
+
+
+## Analysis2. Linear regression 
+**Outcome: AST/ALT**
+
+**Exposure: normalized pfas**
+
+**Covars: source, age, sex, race, rural, smoking, alcohol**
+
+**Analysis: linear regression**
+
+```{r analysis}
+covars <- c("source", "age_at_enrollment", "sex", "race_final_label", "rural", "smoking", "sq_drink_alcohol")
+
+# Perform linear regression using epiomics package
+res <- epiomics::owas(data,
+                      var = "AST/ALT",  # AST/ALT ratio as the outcome variable
+                      omics = pfas_name_scld,
+                      covars = covars,
+                      var_exposure_or_outcome = "outcome",  
+                      family = "gaussian",  # Use "gaussian" for linear regression
+                      conf_int = TRUE)
+
+# reorder PFAS by estimate
+res1 <- res %>%
+  mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~ "Sig.(FDR < 0.05)",
+                         p_value < 0.05 ~ "Sig.(p value < 0.05)", 
+                         TRUE ~ "Not Sig.")) %>%
+  mutate(plot_name = case_when(
+    grepl("pfba", feature_name) ~ "PFBA",
+    grepl("pf_hp_a", feature_name) ~ "PFHpA",
+    grepl("pf_pe_s", feature_name) ~ "PFPeS",
+    grepl("pfbs", feature_name) ~ "PFBS",
+    grepl("pf_hx_a", feature_name) ~ "PFHxA",
+    grepl("pf_do_a", feature_name) ~ "PFDoA",
+    grepl("pfda", feature_name) ~ "PFDA",
+    grepl("pf_pe_a", feature_name) ~ "PFPeA",
+    grepl("pf_un_a", feature_name) ~ "PFUnA",
+    grepl("pfna", feature_name) ~ "PFNA",
+    grepl("pfos", feature_name) ~ "PFOS",
+    grepl("pf_hx_s", feature_name) ~ "PFHxS",
+    grepl("pf_hp_s", feature_name) ~ "PFHpS",
+    grepl("pfoa", feature_name) ~ "PFOA",
+    grepl("pf3ons", feature_name) ~ "9CL-PF3ONS"
+  ))
+
+# Plot coefficients and confidence intervals
+plot <- ggplot(res1, aes(x = estimate, y = fct_reorder(plot_name, estimate), color = sig)) +
+  geom_errorbar(aes(xmin = conf_low, xmax = conf_high), width = 0, position = position_dodge(width = 1)) +
+  geom_point(size = 1, position = position_dodge(width = 1)) + 
+  geom_vline(xintercept = 0, linetype = 2, color = "grey") +  
+  labs(
+    title = "Effect of each PFAS on AST/ALT Ratio",
+    x = "Coefficient (95% CI)", y= "PFAS") +
+  theme(
+    legend.position = "bottom",
+    panel.background = element_rect(fill="white"), 
+    strip.background = element_rect(fill = "white"),
+    strip.text.y = element_text(angle = 0, hjust = 0),
+    text = element_text(size = 15),
+    axis.title.y = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black"),
+    plot.title = element_text(size = 15, hjust = 0.5) 
+  ) +
+  
+  scale_color_manual(values = c("black", "red"))
+
+print(plot)
+
+# Save the plot
+ggsave(filename = fs::path(dir_figures, "Fig. Effect of each PFAS on AST_ALT Ratio.jpeg"),
+       plot = plot,
+       width = 8,
+       height = 8,
+       dpi = 300,
+       bg = "white")
+
+```
+
+## Same results by group of PFAS (Emerging vs Legacy)
+```{r}
+# Reorder PFAS by estimate and add significance and group classification
+res1 <- res1 %>%
+  mutate(group = case_when(
+    grepl("pfbs|pf_pe_a|pf_pe_s|pfba|pf_hx_a", feature_name) ~ "Emerging",
+    TRUE ~ "Legacy"
+  ))
+
+# Plot coefficients and confidence intervals, with facets for emerging vs legacy
+plot <- ggplot(res1, aes(x = estimate, y = fct_reorder(plot_name, estimate), color = sig)) +
+  geom_errorbar(aes(xmin = conf_low, xmax = conf_high), width = 0, position = position_dodge(width = 1)) +
+  geom_point(size = 1, position = position_dodge(width = 1)) + 
+  geom_vline(xintercept = 0, linetype = 2, color = "grey") +  
+  labs(
+    title = "Effect of each PFAS on AST/ALT Ratio by PFAS group",
+    x = "Coefficient (95% CI)", y = "PFAS"
+  ) +
+  theme(
+    legend.position = "bottom",
+    panel.background = element_rect(fill = "white"), 
+    strip.background = element_rect(fill = "white"),
+    strip.text.y = element_text(angle = 0, hjust = 0),
+    text = element_text(size = 15),
+    axis.title.y = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black"),
+    plot.title = element_text(size = 15, hjust = 0.5)
+  ) +
+  scale_color_manual(values = c("black", "red")) +
+  facet_wrap(~ group, scales = "free_y")  # Facet by group
+
+# Display the plot
+print(plot)
+
+# Save the plot
+ggsave(
+  filename = fs::path(dir_figures, "Fig. Effect of each PFAS on AST_ALT Ratio by Group.jpeg"),
+  plot = plot,
+  width = 8,
+  height = 8,
+  dpi = 300,
+  bg = "white"
+)
+
 ```
 
