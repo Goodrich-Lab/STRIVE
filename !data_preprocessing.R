@@ -1,5 +1,7 @@
 # Set up data for analysis
 # library(tidylog)
+source(fs::path(here::here("!libraries.R")))
+source(fs::path(here::here("!directories.R")))
 
 # Read Data ---------------------------------------------------------------
 data <- readxl::read_xlsx(fs::path(
@@ -28,7 +30,8 @@ data <- readxl::read_xlsx(fs::path(
          
          )%>%
   mutate(rural = ifelse(is.na(rural), "Unknown/Not Reported", rural),
-         smoking = ifelse(is.na(smoking), "Unknown/Not Reported", smoking))%>%
+         smoking = ifelse(is.na(smoking), "Unknown/Not Reported", smoking),
+         ethnicity = ifelse(is.na(ethnicity), "Unknown/Not Reported", ethnicity))%>%
   ## added or edited by BS
   mutate(race_eth_label = ifelse(is.na(race_eth_label), "Unknown/Not Reported", race_eth_label),
          race_final_label = ifelse(is.na(race_final_label), "Unknown/Not Reported", race_final_label),
@@ -77,6 +80,15 @@ data_scaled <- data_imputed %>%
 pfas_name_scld <- paste0(pfas_name_analysis,"_", "scld")
 legacy_scld <- paste0(legacy,"_", "scld")
 emerging_scld <- paste0(emerging, "_", "scld")
-# 
 
-write_csv(data_scaled, fs::path(dir_data, "cleaned_data/STRIVE_cleaned_data.csv"))
+# Adding new cirrhosis outcome defined by AST/ALT (Cirrhosis: AST/ALT ratio > 1; Health: AST/ALT ratio <= 1)
+data_scaled1 <- data_scaled %>%
+  mutate(`AST/ALT` = ast_u_l/alt_u_l,
+         cirrhosis = ifelse(`AST/ALT` > 1, "With cirrhosis", "Healthy"))
+
+write_csv(data_scaled1, fs::path(dir_data, "cleaned_data/STRIVE_cleaned_data.csv"))
+
+rm(data)
+rm(data_imputed)
+rm(data_scaled)
+rm(data_scaled1)

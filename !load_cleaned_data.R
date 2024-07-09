@@ -28,9 +28,9 @@ emerging_cat <- c("pfbs_median", "pf_pe_a_median","pf_pe_s_median", "pfba_detect
 # emerging <- c("pfbs", "pf_pe_a","pf_pe_s", "x9cl_pf3ons")
 
 covars <- c("source", "age_at_enrollment","sex", 
-            "race_eth_label", "rural", "smoking")
+            "race_eth_label", "rural", "smoking","sq_drink_alcohol")
 
-covars_analysis <- covars[1:4]
+# covars_analysis <- covars[1:4]
 
 
 pfas_name_scld <- paste0(pfas_name_analysis,"_", "scld")
