@@ -28,7 +28,6 @@ data <- readxl::read_xlsx(fs::path(
            )
          ## to here
          )%>%
-<<<<<<< HEAD
   mutate_at(.vars = c("sq_self_hep_b","sq_self_hep_c","supp_meds_tylenol",
                       "supp_meds_steroids","sq_water_well","sq_water_tap_unfiltered",
                       "sq_water_house_filtration","sq_water_faucet_filter",
@@ -41,11 +40,6 @@ data <- readxl::read_xlsx(fs::path(
                       "sq_water_charcoal_filter","sq_water_bottled",
                       "sq_water_none","sq_water_other_type","sq_water_dont_know"),
             .funs = ~ifelse(is.na(.), "Unknown/Not Reported", .))%>%
-=======
-  mutate(rural = ifelse(is.na(rural), "Unknown/Not Reported", rural),
-         smoking = ifelse(is.na(smoking), "Unknown/Not Reported", smoking),
-         ethnicity = ifelse(is.na(ethnicity), "Unknown/Not Reported", ethnicity))%>%
->>>>>>> efe0c442ef0eb11430bc2f1f4c41b0b9c5a1a9ba
   ## added or edited by BS
   mutate(race_eth_label = ifelse(is.na(race_eth_label), "Unknown/Not Reported", race_eth_label),
          race_final_label = ifelse(is.na(race_final_label), "Unknown/Not Reported", race_final_label),
