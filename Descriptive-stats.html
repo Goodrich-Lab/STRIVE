@@ -11,7 +11,6 @@
 
 <meta name="author" content="Hongxu Wang" />
 
-<meta name="date" content="2024-07-08" />
 
 <title>STRIVE</title>
 
@@ -2841,42 +2840,16 @@ border-radius: 0px;
 <h1 class="title toc-ignore">STRIVE</h1>
 <h3 class="subtitle">Descriptive Stats</h3>
 <h4 class="author">Hongxu Wang</h4>
-<h4 class="date">08 July 2024</h4>
+<h4 class="date">10 7월 2024</h4>
 
 </div>
 
 
-<pre class="r"><code>data &lt;- readxl::read_xlsx(fs::path(
-  dir_data,
-  &quot;STRIVE_PFAS_demo_28jun24.xlsx&quot;)) %&gt;% 
-  janitor::clean_names()%&gt;%
-  mutate(sex = ifelse(sex == 1, &quot;Male&quot;, &quot;Female&quot;),
-         rural = ifelse(rural == 1, &quot;Living in rural area&quot;, &quot;Living in Metro area&quot;),
-         smoking = ifelse(smoking == 1, &quot;Smoke or use vape&quot;, &quot;Don&#39;t smoke or use vape&quot;),
-         case_control = ifelse(case_control == 1, &quot;With cirrhosis&quot;, &quot;Healthy&quot;),
-         ## added by BS
-         ethnicity = ifelse(ethnicity == 1, &quot;Hispanic&quot;, &quot;Not Hispanic&quot;),
-         sq_drink_alcohol = case_when(
-           sq_drink_alcohol == 1 ~ &quot;Yes, current drinker&quot;,
-           sq_drink_alcohol == 2 ~ &quot;No, former drinker (stopped)&quot;,
-           sq_drink_alcohol == 3 ~ &quot;No, never drinker&quot;,
-           TRUE ~ &quot;Unknown/Not Reported&quot;), 
-         sq_average_drink_per_day = case_when(
-             sq_average_drink_per_day == 1 ~ &quot;Less than 1 alcoholic drink per day&quot;,
-             sq_average_drink_per_day == 2 ~ &quot;1-2 alcoholic drinks per day&quot;,
-             sq_average_drink_per_day == 3 ~ &quot;3-4 alcoholic drinks per day&quot;,
-             sq_average_drink_per_day == 4 ~ &quot;More than 4 alcoholic drinks per day&quot;,
-             TRUE ~ &quot;Unknown/Not Reported&quot;
-           )
-         ## to here 
-         
-         )%&gt;%
-  mutate(rural = ifelse(is.na(rural), &quot;Unknown/Not Reported&quot;, rural),
-         smoking = ifelse(is.na(smoking), &quot;Unknown/Not Reported&quot;, smoking))%&gt;%
-  ## added or edited by BS
-  mutate(race_eth_label = ifelse(is.na(race_eth_label), &quot;Unknown/Not Reported&quot;, race_eth_label),
-         race_final_label = ifelse(is.na(race_final_label), &quot;Unknown/Not Reported&quot;, race_final_label),
-         sq_average_drink_per_day = ifelse(is.na(sq_average_drink_per_day), &quot;Unknown/Not Reported&quot;, sq_average_drink_per_day))</code></pre>
+<pre class="r"><code>#data1 &lt;- data %&gt;% drop_na(case_control) %&gt;% dyplr::select(-strive_id,-contains(&quot;scld&quot;)) %&gt;%
+ # mutate_at(.vars = covars[-2],
+  #          .funs = ~ as.character(.))
+# 
+# table1::table1(~.|case_control, data1)</code></pre>
 <div id="check-percentage-of-na-for-each-pfas" class="section level1">
 <h1>Check percentage of NA for each PFAS</h1>
 <pre class="r"><code>data_pfas&lt;- data %&gt;% dplyr::select(pfas_name, case_control, -contains(&quot;scld&quot;))
@@ -2892,33 +2865,33 @@ pfas_na &lt;- data_pfas %&gt;%
 # print all rows
 print(pfas_na, n=25)</code></pre>
 <pre><code>## # A tibble: 25 × 2
-##    name             pct_na
-##    &lt;chr&gt;             &lt;dbl&gt;
-##  1 pf_hx_s         0      
-##  2 pfda            0      
-##  3 pfna            0      
-##  4 pfos            0      
-##  5 pf_hp_a         0.00265
-##  6 pfbs            0.00265
-##  7 pfoa            0.00265
-##  8 pf_pe_a         0.00529
-##  9 pf_un_a         0.00529
-## 10 pf_hp_s         0.0106 
-## 11 pf_do_a         0.103  
-## 12 pf_pe_s         0.106  
-## 13 x9cl_pf3ons     0.267  
-## 14 pf_hx_a         0.307  
-## 15 pfba            0.796  
-## 16 x8_2fts         0.939  
-## 17 hfpo_da         0.944  
-## 18 pfeesa          0.950  
-## 19 x6_2fts         0.979  
-## 20 x11cl_pf3o_ud_s 0.989  
-## 21 adona           0.992  
-## 22 nfdha           0.997  
-## 23 pfmba           0.997  
-## 24 pfmpa           0.997  
-## 25 x4_2fts         0.997</code></pre>
+##    name            pct_na
+##    &lt;chr&gt;            &lt;dbl&gt;
+##  1 pf_do_a          0    
+##  2 pf_hp_a          0    
+##  3 pf_hp_s          0    
+##  4 pf_hx_a          0    
+##  5 pf_hx_s          0    
+##  6 pf_pe_a          0    
+##  7 pf_pe_s          0    
+##  8 pf_un_a          0    
+##  9 pfba             0    
+## 10 pfbs             0    
+## 11 pfda             0    
+## 12 pfna             0    
+## 13 pfoa             0    
+## 14 pfos             0    
+## 15 x9cl_pf3ons      0.267
+## 16 x8_2fts          0.939
+## 17 hfpo_da          0.944
+## 18 pfeesa           0.950
+## 19 x6_2fts          0.979
+## 20 x11cl_pf3o_ud_s  0.989
+## 21 adona            0.992
+## 22 nfdha            0.997
+## 23 pfmba            0.997
+## 24 pfmpa            0.997
+## 25 x4_2fts          0.997</code></pre>
 <pre class="r"><code># writexl::write_xlsx(pfas_na,
 #                     fs::path(dir_result,
 #                              &quot;percent of na for PFAS.xlsx&quot;))
@@ -2947,18 +2920,25 @@ pfas_name_analysis &lt;- pfas_na$name[1:12] # by the cutoff of 25% of missing</c
   ungroup())</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["geometric_mean"],"name":[2],"type":["chr"],"align":["left"]},{"label":["sd"],"name":[3],"type":["chr"],"align":["left"]},{"label":["min"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["max"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["percentile_25"],"name":[6],"type":["chr"],"align":["left"]},{"label":["percentile_50"],"name":[7],"type":["chr"],"align":["left"]},{"label":["percentile_75"],"name":[8],"type":["chr"],"align":["left"]},{"label":["percentile_90"],"name":[9],"type":["chr"],"align":["left"]}],"data":[{"1":"pf_do_a","2":"0.0142 [0.0128, 0.0157]","3":"0.0 (2.5)","4":"0.001","5":"0.337","6":"0.008","7":"0.013","8":"0.022","9":"0.0471"},{"1":"pf_hp_a","2":"0.0519 [0.0483, 0.0559]","3":"0.1 (2.0)","4":"0.007","5":"0.430","6":"0.0332","7":"0.049","8":"0.0798","9":"0.131"},{"1":"pf_hp_s","2":"0.139 [0.126, 0.154]","3":"0.1 (2.5)","4":"0.004","5":"1.046","6":"0.078","7":"0.151","8":"0.266","9":"0.434"},{"1":"pf_hx_s","2":"0.934 [0.839, 1.04]","3":"0.9 (2.8)","4":"0.012","5":"13.269","6":"0.542","7":"1.05","8":"1.74","9":"2.98"},{"1":"pf_pe_a","2":"0.0447 [0.0428, 0.0466]","3":"0.0 (1.5)","4":"0.023","5":"0.280","6":"0.034","7":"0.042","8":"0.053","9":"0.068"},{"1":"pf_pe_s","2":"0.023 [0.0212, 0.0249]","3":"0.0 (2.0)","4":"0.005","5":"0.254","6":"0.014","7":"0.021","8":"0.036","9":"0.0554"},{"1":"pf_un_a","2":"0.0792 [0.0713, 0.088]","3":"0.1 (2.7)","4":"0.006","5":"1.021","6":"0.043","7":"0.078","8":"0.148","9":"0.288"},{"1":"pfbs","2":"0.0319 [0.0295, 0.0344]","3":"0.0 (2.1)","4":"0.008","5":"1.334","6":"0.02","7":"0.029","8":"0.0468","9":"0.0727"},{"1":"pfda","2":"0.165 [0.15, 0.181]","3":"0.2 (2.5)","4":"0.011","5":"2.375","6":"0.087","7":"0.162","8":"0.267","9":"0.567"},{"1":"pfna","2":"0.4 [0.366, 0.437]","3":"0.4 (2.3)","4":"0.016","5":"4.875","6":"0.254","7":"0.421","8":"0.645","9":"1.1"},{"1":"pfoa","2":"1.01 [0.919, 1.11]","3":"1.0 (2.4)","4":"0.047","5":"13.699","6":"0.64","7":"1.08","8":"1.85","9":"2.76"},{"1":"pfos","2":"3.97 [3.57, 4.41]","3":"4.0 (2.7)","4":"0.082","5":"47.909","6":"2.27","7":"4.25","8":"7.11","9":"12.1"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["geometric_mean"],"name":[2],"type":["chr"],"align":["left"]},{"label":["sd"],"name":[3],"type":["chr"],"align":["left"]},{"label":["min"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["max"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["percentile_25"],"name":[6],"type":["chr"],"align":["left"]},{"label":["percentile_50"],"name":[7],"type":["chr"],"align":["left"]},{"label":["percentile_75"],"name":[8],"type":["chr"],"align":["left"]},{"label":["percentile_90"],"name":[9],"type":["chr"],"align":["left"]}],"data":[{"1":"pf_do_a","2":"0.0106 [0.00933, 0.0122]","3":"0.0 (3.5)","4":"0.0007071068","5":"0.337","6":"0.007","7":"0.012","8":"0.021","9":"0.045"},{"1":"pf_hp_a","2":"0.0515 [0.0479, 0.0555]","3":"0.1 (2.0)","4":"0.0035355339","5":"0.430","6":"0.033","7":"0.049","8":"0.0795","9":"0.13"},{"1":"pf_hp_s","2":"0.133 [0.119, 0.148]","3":"0.1 (2.8)","4":"0.0028284271","5":"1.046","6":"0.0765","7":"0.149","8":"0.265","9":"0.433"},{"1":"pf_hx_a","2":"0.00732 [0.00662, 0.0081]","3":"0.0 (2.6)","4":"0.0021213203","5":"0.101","6":"0.00212","7":"0.01","8":"0.014","9":"0.0218"},{"1":"pf_hx_s","2":"0.934 [0.839, 1.04]","3":"0.9 (2.8)","4":"0.0120000000","5":"13.269","6":"0.542","7":"1.05","8":"1.74","9":"2.98"},{"1":"pf_pe_a","2":"0.0444 [0.0426, 0.0463]","3":"0.0 (1.5)","4":"0.0162634560","5":"0.280","6":"0.034","7":"0.042","8":"0.053","9":"0.068"},{"1":"pf_pe_s","2":"0.0189 [0.0172, 0.0208]","3":"0.0 (2.4)","4":"0.0035355339","5":"0.254","6":"0.011","7":"0.019","8":"0.033","9":"0.0528"},{"1":"pf_un_a","2":"0.0779 [0.0699, 0.0867]","3":"0.1 (2.8)","4":"0.0042426407","5":"1.021","6":"0.0425","7":"0.078","8":"0.148","9":"0.287"},{"1":"pfba","2":"0.00783 [0.00683, 0.00898]","3":"0.0 (3.6)","4":"0.0042426407","5":"0.480","6":"0.00424","7":"0.00424","8":"0.00424","9":"0.113"},{"1":"pfbs","2":"0.0317 [0.0293, 0.0343]","3":"0.0 (2.1)","4":"0.0056568542","5":"1.334","6":"0.02","7":"0.029","8":"0.0465","9":"0.0724"},{"1":"pfda","2":"0.165 [0.15, 0.181]","3":"0.2 (2.5)","4":"0.0110000000","5":"2.375","6":"0.087","7":"0.162","8":"0.267","9":"0.567"},{"1":"pfna","2":"0.4 [0.366, 0.437]","3":"0.4 (2.3)","4":"0.0160000000","5":"4.875","6":"0.254","7":"0.421","8":"0.645","9":"1.1"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code># writexl::write_xlsx(pfas_stats,
-#                     fs::path(dir_result,
-#                              &quot;descriptive_stats_pfas.xlsx&quot;))</code></pre>
+<pre class="r"><code>#writexl::write_xlsx(pfas_stats,
+ #                   fs::path(dir_result,
+     #                        &quot;descriptive_stats_pfas.xlsx&quot;))</code></pre>
 </div>
 <div id="descriptive-stats-split-by-outcome" class="section level1">
 <h1>Descriptive stats split by outcome</h1>
-<pre class="r"><code>(data %&gt;% dplyr::select(pfas_name_analysis, covars,race_final_label,
+<pre class="r"><code>covars &lt;- c(&quot;source&quot;, &quot;age_at_enrollment&quot;,&quot;sex&quot;, 
+            &quot;race_eth_label&quot;, &quot;race_final_label&quot;,&quot;ethnicity&quot;,
+            &quot;rural&quot;, &quot;smoking&quot;,&quot;sq_drink_alcohol&quot;,&quot;sq_average_drink_per_day&quot;,&quot;sq_self_hep_b&quot;,
+            &quot;sq_self_hep_c&quot;,&quot;supp_meds_tylenol&quot;,&quot;supp_meds_steroids&quot;,&quot;sq_water_well&quot;,
+            &quot;sq_water_tap_unfiltered&quot;,&quot;sq_water_house_filtration&quot;, &quot;sq_water_faucet_filter&quot;,
+            &quot;sq_water_charcoal_filter&quot;,&quot;sq_water_bottled&quot;,&quot;sq_water_none&quot;,&quot;sq_water_other_type&quot;)
+
+(data %&gt;% dplyr::select(pfas_name_analysis, covars,race_final_label,
                   ethnicity,contains(&quot;sq_&quot;),contains(&quot;alt&quot;), 
-                  contains(&quot;ast&quot;), contains(&quot;trig&quot;),
+                  contains(&quot;ast&quot;), contains(&quot;trig&quot;),cirrhosis,
                   case_control) %&gt;%
   tbl_summary(by = case_control,
               type = all_continuous() ~ &quot;continuous2&quot;,
@@ -2971,25 +2951,25 @@ pfas_name_analysis &lt;- pfas_na$name[1:12] # by the cutoff of 25% of missing</c
   add_n())</code></pre>
 <pre><code>## 35 observations missing `case_control` have been removed. To include these observations, use `forcats::fct_na_value_to_level()` on `case_control` column before passing to `tbl_summary()`.</code></pre>
 <pre><code>## There was an error in &#39;add_p()/add_difference()&#39; for variable &#39;alt_normal_range&#39;, p-value omitted:
-## Error in stats::chisq.test(x = c(&quot;7 - 55 U/L&quot;, &quot;7 - 55 U/L&quot;, &quot;7 - 55 U/L&quot;, : &#39;x&#39; and &#39;y&#39; must have at least 2 levels</code></pre>
+## Error in stats::chisq.test(x = c(&quot;7 - 55 U/L&quot;, &quot;7 - 55 U/L&quot;, &quot;7 - 55 U/L&quot;, : &#39;x&#39;와 &#39;y&#39;는 반드시 최소한 2 level들을 가져야 합니다</code></pre>
 <pre><code>## There was an error in &#39;add_p()/add_difference()&#39; for variable &#39;ast_normal_range&#39;, p-value omitted:
-## Error in stats::chisq.test(x = c(&quot;5 - 34 U/L&quot;, &quot;5 - 34 U/L&quot;, &quot;5 - 34 U/L&quot;, : &#39;x&#39; and &#39;y&#39; must have at least 2 levels</code></pre>
+## Error in stats::chisq.test(x = c(&quot;5 - 34 U/L&quot;, &quot;5 - 34 U/L&quot;, &quot;5 - 34 U/L&quot;, : &#39;x&#39;와 &#39;y&#39;는 반드시 최소한 2 level들을 가져야 합니다</code></pre>
 <pre><code>## There was an error in &#39;add_p()/add_difference()&#39; for variable &#39;trig_normal_range&#39;, p-value omitted:
-## Error in stats::chisq.test(x = c(&quot;0 - 149 mg/dL&quot;, &quot;0 - 149 mg/dL&quot;, &quot;0 - 149 mg/dL&quot;, : &#39;x&#39; and &#39;y&#39; must have at least 2 levels</code></pre>
-<div id="qmqvtrlmrp" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#qmqvtrlmrp table {
+## Error in stats::chisq.test(x = c(&quot;0 - 149 mg/dL&quot;, &quot;0 - 149 mg/dL&quot;, &quot;0 - 149 mg/dL&quot;, : &#39;x&#39;와 &#39;y&#39;는 반드시 최소한 2 level들을 가져야 합니다</code></pre>
+<div id="lztxtetujm" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#lztxtetujm table {
 font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 -webkit-font-smoothing: antialiased;
 -moz-osx-font-smoothing: grayscale;
 }
-#qmqvtrlmrp thead, #qmqvtrlmrp tbody, #qmqvtrlmrp tfoot, #qmqvtrlmrp tr, #qmqvtrlmrp td, #qmqvtrlmrp th {
+#lztxtetujm thead, #lztxtetujm tbody, #lztxtetujm tfoot, #lztxtetujm tr, #lztxtetujm td, #lztxtetujm th {
 border-style: none;
 }
-#qmqvtrlmrp p {
+#lztxtetujm p {
 margin: 0;
 padding: 0;
 }
-#qmqvtrlmrp .gt_table {
+#lztxtetujm .gt_table {
 display: table;
 border-collapse: collapse;
 line-height: normal;
@@ -3014,11 +2994,11 @@ border-left-style: none;
 border-left-width: 2px;
 border-left-color: #D3D3D3;
 }
-#qmqvtrlmrp .gt_caption {
+#lztxtetujm .gt_caption {
 padding-top: 4px;
 padding-bottom: 4px;
 }
-#qmqvtrlmrp .gt_title {
+#lztxtetujm .gt_title {
 color: #333333;
 font-size: 125%;
 font-weight: initial;
@@ -3029,7 +3009,7 @@ padding-right: 5px;
 border-bottom-color: #FFFFFF;
 border-bottom-width: 0;
 }
-#qmqvtrlmrp .gt_subtitle {
+#lztxtetujm .gt_subtitle {
 color: #333333;
 font-size: 85%;
 font-weight: initial;
@@ -3040,7 +3020,7 @@ padding-right: 5px;
 border-top-color: #FFFFFF;
 border-top-width: 0;
 }
-#qmqvtrlmrp .gt_heading {
+#lztxtetujm .gt_heading {
 background-color: #FFFFFF;
 text-align: center;
 border-bottom-color: #FFFFFF;
@@ -3051,12 +3031,12 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#qmqvtrlmrp .gt_bottom_border {
+#lztxtetujm .gt_bottom_border {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#qmqvtrlmrp .gt_col_headings {
+#lztxtetujm .gt_col_headings {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -3070,7 +3050,7 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#qmqvtrlmrp .gt_col_heading {
+#lztxtetujm .gt_col_heading {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3089,7 +3069,7 @@ padding-left: 5px;
 padding-right: 5px;
 overflow-x: hidden;
 }
-#qmqvtrlmrp .gt_column_spanner_outer {
+#lztxtetujm .gt_column_spanner_outer {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3100,13 +3080,13 @@ padding-bottom: 0;
 padding-left: 4px;
 padding-right: 4px;
 }
-#qmqvtrlmrp .gt_column_spanner_outer:first-child {
+#lztxtetujm .gt_column_spanner_outer:first-child {
 padding-left: 0;
 }
-#qmqvtrlmrp .gt_column_spanner_outer:last-child {
+#lztxtetujm .gt_column_spanner_outer:last-child {
 padding-right: 0;
 }
-#qmqvtrlmrp .gt_column_spanner {
+#lztxtetujm .gt_column_spanner {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
@@ -3117,10 +3097,10 @@ overflow-x: hidden;
 display: inline-block;
 width: 100%;
 }
-#qmqvtrlmrp .gt_spanner_row {
+#lztxtetujm .gt_spanner_row {
 border-bottom-style: hidden;
 }
-#qmqvtrlmrp .gt_group_heading {
+#lztxtetujm .gt_group_heading {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3145,7 +3125,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 text-align: left;
 }
-#qmqvtrlmrp .gt_empty_group_heading {
+#lztxtetujm .gt_empty_group_heading {
 padding: 0.5px;
 color: #333333;
 background-color: #FFFFFF;
@@ -3159,13 +3139,13 @@ border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 vertical-align: middle;
 }
-#qmqvtrlmrp .gt_from_md > :first-child {
+#lztxtetujm .gt_from_md > :first-child {
 margin-top: 0;
 }
-#qmqvtrlmrp .gt_from_md > :last-child {
+#lztxtetujm .gt_from_md > :last-child {
 margin-bottom: 0;
 }
-#qmqvtrlmrp .gt_row {
+#lztxtetujm .gt_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3183,7 +3163,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 overflow-x: hidden;
 }
-#qmqvtrlmrp .gt_stub {
+#lztxtetujm .gt_stub {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3195,7 +3175,7 @@ border-right-color: #D3D3D3;
 padding-left: 5px;
 padding-right: 5px;
 }
-#qmqvtrlmrp .gt_stub_row_group {
+#lztxtetujm .gt_stub_row_group {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3208,13 +3188,13 @@ padding-left: 5px;
 padding-right: 5px;
 vertical-align: top;
 }
-#qmqvtrlmrp .gt_row_group_first td {
+#lztxtetujm .gt_row_group_first td {
 border-top-width: 2px;
 }
-#qmqvtrlmrp .gt_row_group_first th {
+#lztxtetujm .gt_row_group_first th {
 border-top-width: 2px;
 }
-#qmqvtrlmrp .gt_summary_row {
+#lztxtetujm .gt_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -3223,14 +3203,14 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#qmqvtrlmrp .gt_first_summary_row {
+#lztxtetujm .gt_first_summary_row {
 border-top-style: solid;
 border-top-color: #D3D3D3;
 }
-#qmqvtrlmrp .gt_first_summary_row.thick {
+#lztxtetujm .gt_first_summary_row.thick {
 border-top-width: 2px;
 }
-#qmqvtrlmrp .gt_last_summary_row {
+#lztxtetujm .gt_last_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3239,7 +3219,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#qmqvtrlmrp .gt_grand_summary_row {
+#lztxtetujm .gt_grand_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -3248,7 +3228,7 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#qmqvtrlmrp .gt_first_grand_summary_row {
+#lztxtetujm .gt_first_grand_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3257,7 +3237,7 @@ border-top-style: double;
 border-top-width: 6px;
 border-top-color: #D3D3D3;
 }
-#qmqvtrlmrp .gt_last_grand_summary_row_top {
+#lztxtetujm .gt_last_grand_summary_row_top {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3266,10 +3246,10 @@ border-bottom-style: double;
 border-bottom-width: 6px;
 border-bottom-color: #D3D3D3;
 }
-#qmqvtrlmrp .gt_striped {
+#lztxtetujm .gt_striped {
 background-color: rgba(128, 128, 128, 0.05);
 }
-#qmqvtrlmrp .gt_table_body {
+#lztxtetujm .gt_table_body {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -3277,7 +3257,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#qmqvtrlmrp .gt_footnotes {
+#lztxtetujm .gt_footnotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -3290,7 +3270,7 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#qmqvtrlmrp .gt_footnote {
+#lztxtetujm .gt_footnote {
 margin: 0px;
 font-size: 90%;
 padding-top: 4px;
@@ -3298,7 +3278,7 @@ padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#qmqvtrlmrp .gt_sourcenotes {
+#lztxtetujm .gt_sourcenotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -3311,73 +3291,151 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#qmqvtrlmrp .gt_sourcenote {
+#lztxtetujm .gt_sourcenote {
 font-size: 90%;
 padding-top: 4px;
 padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#qmqvtrlmrp .gt_left {
+#lztxtetujm .gt_left {
 text-align: left;
 }
-#qmqvtrlmrp .gt_center {
+#lztxtetujm .gt_center {
 text-align: center;
 }
-#qmqvtrlmrp .gt_right {
+#lztxtetujm .gt_right {
 text-align: right;
 font-variant-numeric: tabular-nums;
 }
-#qmqvtrlmrp .gt_font_normal {
+#lztxtetujm .gt_font_normal {
 font-weight: normal;
 }
-#qmqvtrlmrp .gt_font_bold {
+#lztxtetujm .gt_font_bold {
 font-weight: bold;
 }
-#qmqvtrlmrp .gt_font_italic {
+#lztxtetujm .gt_font_italic {
 font-style: italic;
 }
-#qmqvtrlmrp .gt_super {
+#lztxtetujm .gt_super {
 font-size: 65%;
 }
-#qmqvtrlmrp .gt_footnote_marks {
+#lztxtetujm .gt_footnote_marks {
 font-size: 75%;
 vertical-align: 0.4em;
 position: initial;
 }
-#qmqvtrlmrp .gt_asterisk {
+#lztxtetujm .gt_asterisk {
 font-size: 100%;
 vertical-align: 0;
 }
-#qmqvtrlmrp .gt_indent_1 {
+#lztxtetujm .gt_indent_1 {
 text-indent: 5px;
 }
-#qmqvtrlmrp .gt_indent_2 {
+#lztxtetujm .gt_indent_2 {
 text-indent: 10px;
 }
-#qmqvtrlmrp .gt_indent_3 {
+#lztxtetujm .gt_indent_3 {
 text-indent: 15px;
 }
-#qmqvtrlmrp .gt_indent_4 {
+#lztxtetujm .gt_indent_4 {
 text-indent: 20px;
 }
-#qmqvtrlmrp .gt_indent_5 {
+#lztxtetujm .gt_indent_5 {
 text-indent: 25px;
+}
+#lztxtetujm .katex-display {
+display: inline-flex !important;
+margin-bottom: 0.75em !important;
+}
+#lztxtetujm div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+height: 0px !important;
 }
 </style>
 <table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
   <thead>
-    
     <tr class="gt_col_headings">
-      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="&lt;strong&gt;Characteristic&lt;/strong&gt;"><strong>Characteristic</strong></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&lt;strong&gt;N&lt;/strong&gt;"><strong>N</strong></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&lt;strong&gt;Overall&lt;/strong&gt;, N = 343&lt;span class=&quot;gt_footnote_marks&quot; style=&quot;white-space:nowrap;font-style:italic;font-weight:normal;&quot;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;"><strong>Overall</strong>, N = 343<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"><sup>1</sup></span></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&lt;strong&gt;Healthy&lt;/strong&gt;, N = 206&lt;span class=&quot;gt_footnote_marks&quot; style=&quot;white-space:nowrap;font-style:italic;font-weight:normal;&quot;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;"><strong>Healthy</strong>, N = 206<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"><sup>1</sup></span></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&lt;strong&gt;With cirrhosis&lt;/strong&gt;, N = 137&lt;span class=&quot;gt_footnote_marks&quot; style=&quot;white-space:nowrap;font-style:italic;font-weight:normal;&quot;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;"><strong>With cirrhosis</strong>, N = 137<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"><sup>1</sup></span></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&lt;strong&gt;p-value&lt;/strong&gt;&lt;span class=&quot;gt_footnote_marks&quot; style=&quot;white-space:nowrap;font-style:italic;font-weight:normal;&quot;&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/span&gt;"><strong>p-value</strong><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"><sup>2</sup></span></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="&lt;span class=&#39;gt_from_md&#39;&gt;&lt;strong&gt;Characteristic&lt;/strong&gt;&lt;/span&gt;"><span class="gt_from_md"><strong>Characteristic</strong></span></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&lt;span class=&#39;gt_from_md&#39;&gt;&lt;strong&gt;N&lt;/strong&gt;&lt;/span&gt;"><span class="gt_from_md"><strong>N</strong></span></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&lt;span class=&#39;gt_from_md&#39;&gt;&lt;strong&gt;Overall&lt;/strong&gt;, N = 343&lt;/span&gt;&lt;span class=&quot;gt_footnote_marks&quot; style=&quot;white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;&quot;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;"><span class="gt_from_md"><strong>Overall</strong>, N = 343</span><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;"><sup>1</sup></span></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&lt;span class=&#39;gt_from_md&#39;&gt;&lt;strong&gt;Healthy&lt;/strong&gt;, N = 206&lt;/span&gt;&lt;span class=&quot;gt_footnote_marks&quot; style=&quot;white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;&quot;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;"><span class="gt_from_md"><strong>Healthy</strong>, N = 206</span><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;"><sup>1</sup></span></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&lt;span class=&#39;gt_from_md&#39;&gt;&lt;strong&gt;With cirrhosis&lt;/strong&gt;, N = 137&lt;/span&gt;&lt;span class=&quot;gt_footnote_marks&quot; style=&quot;white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;&quot;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;"><span class="gt_from_md"><strong>With cirrhosis</strong>, N = 137</span><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;"><sup>1</sup></span></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&lt;span class=&#39;gt_from_md&#39;&gt;&lt;strong&gt;p-value&lt;/strong&gt;&lt;/span&gt;&lt;span class=&quot;gt_footnote_marks&quot; style=&quot;white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;&quot;&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/span&gt;"><span class="gt_from_md"><strong>p-value</strong></span><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;"><sup>2</sup></span></th>
     </tr>
   </thead>
   <tbody class="gt_table_body">
+    <tr><td headers="label" class="gt_row gt_left">pf_do_a</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.001</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.021 (0.035)</td>
+<td headers="stat_1" class="gt_row gt_center">0.023 (0.033)</td>
+<td headers="stat_2" class="gt_row gt_center">0.019 (0.038)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.012 (0.007, 0.021)</td>
+<td headers="stat_1" class="gt_row gt_center">0.014 (0.007, 0.024)</td>
+<td headers="stat_2" class="gt_row gt_center">0.009 (0.005, 0.016)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">pf_hp_a</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.020</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.07 (0.05)</td>
+<td headers="stat_1" class="gt_row gt_center">0.06 (0.04)</td>
+<td headers="stat_2" class="gt_row gt_center">0.08 (0.07)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.05 (0.03, 0.08)</td>
+<td headers="stat_1" class="gt_row gt_center">0.05 (0.03, 0.07)</td>
+<td headers="stat_2" class="gt_row gt_center">0.05 (0.03, 0.10)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">pf_hp_s</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.20 (0.17)</td>
+<td headers="stat_1" class="gt_row gt_center">0.22 (0.17)</td>
+<td headers="stat_2" class="gt_row gt_center">0.17 (0.16)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.15 (0.08, 0.27)</td>
+<td headers="stat_1" class="gt_row gt_center">0.16 (0.10, 0.29)</td>
+<td headers="stat_2" class="gt_row gt_center">0.13 (0.06, 0.23)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">pf_hx_a</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.004</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.011 (0.011)</td>
+<td headers="stat_1" class="gt_row gt_center">0.010 (0.010)</td>
+<td headers="stat_2" class="gt_row gt_center">0.013 (0.012)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.010 (0.002, 0.014)</td>
+<td headers="stat_1" class="gt_row gt_center">0.009 (0.002, 0.013)</td>
+<td headers="stat_2" class="gt_row gt_center">0.011 (0.002, 0.017)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">pf_hx_s</td>
 <td headers="n" class="gt_row gt_center">343</td>
 <td headers="stat_0" class="gt_row gt_center"><br /></td>
@@ -3395,6 +3453,96 @@ text-indent: 25px;
 <td headers="stat_0" class="gt_row gt_center">1.05 (0.54, 1.74)</td>
 <td headers="stat_1" class="gt_row gt_center">1.21 (0.61, 1.91)</td>
 <td headers="stat_2" class="gt_row gt_center">0.86 (0.44, 1.46)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">pf_pe_a</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.023</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.049 (0.032)</td>
+<td headers="stat_1" class="gt_row gt_center">0.051 (0.036)</td>
+<td headers="stat_2" class="gt_row gt_center">0.046 (0.025)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.042 (0.034, 0.053)</td>
+<td headers="stat_1" class="gt_row gt_center">0.043 (0.036, 0.054)</td>
+<td headers="stat_2" class="gt_row gt_center">0.037 (0.032, 0.052)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">pf_pe_s</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.036</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.028 (0.031)</td>
+<td headers="stat_1" class="gt_row gt_center">0.030 (0.035)</td>
+<td headers="stat_2" class="gt_row gt_center">0.024 (0.024)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.019 (0.011, 0.033)</td>
+<td headers="stat_1" class="gt_row gt_center">0.020 (0.013, 0.036)</td>
+<td headers="stat_2" class="gt_row gt_center">0.018 (0.010, 0.030)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">pf_un_a</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.13 (0.15)</td>
+<td headers="stat_1" class="gt_row gt_center">0.15 (0.15)</td>
+<td headers="stat_2" class="gt_row gt_center">0.09 (0.14)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.08 (0.04, 0.15)</td>
+<td headers="stat_1" class="gt_row gt_center">0.10 (0.05, 0.19)</td>
+<td headers="stat_2" class="gt_row gt_center">0.06 (0.03, 0.10)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">pfba</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.092</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.03 (0.07)</td>
+<td headers="stat_1" class="gt_row gt_center">0.02 (0.05)</td>
+<td headers="stat_2" class="gt_row gt_center">0.04 (0.09)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.00 (0.00, 0.00)</td>
+<td headers="stat_1" class="gt_row gt_center">0.00 (0.00, 0.00)</td>
+<td headers="stat_2" class="gt_row gt_center">0.00 (0.00, 0.00)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">pfbs</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.94</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.050 (0.110)</td>
+<td headers="stat_1" class="gt_row gt_center">0.044 (0.082)</td>
+<td headers="stat_2" class="gt_row gt_center">0.057 (0.142)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">0.029 (0.020, 0.047)</td>
+<td headers="stat_1" class="gt_row gt_center">0.028 (0.020, 0.044)</td>
+<td headers="stat_2" class="gt_row gt_center">0.029 (0.018, 0.049)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">pfda</td>
 <td headers="n" class="gt_row gt_center">343</td>
@@ -3431,216 +3579,6 @@ text-indent: 25px;
 <td headers="stat_0" class="gt_row gt_center">0.42 (0.25, 0.65)</td>
 <td headers="stat_1" class="gt_row gt_center">0.48 (0.32, 0.73)</td>
 <td headers="stat_2" class="gt_row gt_center">0.34 (0.18, 0.54)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">pfos</td>
-<td headers="n" class="gt_row gt_center">343</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">6.1 (6.5)</td>
-<td headers="stat_1" class="gt_row gt_center">6.8 (6.5)</td>
-<td headers="stat_2" class="gt_row gt_center">5.1 (6.5)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">4.2 (2.3, 7.1)</td>
-<td headers="stat_1" class="gt_row gt_center">4.8 (2.9, 8.6)</td>
-<td headers="stat_2" class="gt_row gt_center">3.4 (1.7, 6.1)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">pf_hp_a</td>
-<td headers="n" class="gt_row gt_center">342</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">0.014</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.07 (0.05)</td>
-<td headers="stat_1" class="gt_row gt_center">0.06 (0.04)</td>
-<td headers="stat_2" class="gt_row gt_center">0.08 (0.07)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.05 (0.03, 0.08)</td>
-<td headers="stat_1" class="gt_row gt_center">0.05 (0.03, 0.07)</td>
-<td headers="stat_2" class="gt_row gt_center">0.05 (0.03, 0.10)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">1</td>
-<td headers="stat_1" class="gt_row gt_center">0</td>
-<td headers="stat_2" class="gt_row gt_center">1</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">pfbs</td>
-<td headers="n" class="gt_row gt_center">342</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">0.97</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.050 (0.110)</td>
-<td headers="stat_1" class="gt_row gt_center">0.044 (0.082)</td>
-<td headers="stat_2" class="gt_row gt_center">0.058 (0.142)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.029 (0.020, 0.047)</td>
-<td headers="stat_1" class="gt_row gt_center">0.028 (0.020, 0.044)</td>
-<td headers="stat_2" class="gt_row gt_center">0.029 (0.018, 0.049)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">1</td>
-<td headers="stat_1" class="gt_row gt_center">0</td>
-<td headers="stat_2" class="gt_row gt_center">1</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">pfoa</td>
-<td headers="n" class="gt_row gt_center">342</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">1.45 (1.47)</td>
-<td headers="stat_1" class="gt_row gt_center">1.64 (1.67)</td>
-<td headers="stat_2" class="gt_row gt_center">1.16 (1.03)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">1.08 (0.64, 1.85)</td>
-<td headers="stat_1" class="gt_row gt_center">1.23 (0.75, 2.03)</td>
-<td headers="stat_2" class="gt_row gt_center">0.91 (0.48, 1.52)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">1</td>
-<td headers="stat_1" class="gt_row gt_center">1</td>
-<td headers="stat_2" class="gt_row gt_center">0</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">pf_pe_a</td>
-<td headers="n" class="gt_row gt_center">341</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">0.039</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.049 (0.032)</td>
-<td headers="stat_1" class="gt_row gt_center">0.051 (0.036)</td>
-<td headers="stat_2" class="gt_row gt_center">0.046 (0.025)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.042 (0.034, 0.053)</td>
-<td headers="stat_1" class="gt_row gt_center">0.043 (0.036, 0.054)</td>
-<td headers="stat_2" class="gt_row gt_center">0.038 (0.032, 0.053)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">2</td>
-<td headers="stat_1" class="gt_row gt_center">0</td>
-<td headers="stat_2" class="gt_row gt_center">2</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">pf_un_a</td>
-<td headers="n" class="gt_row gt_center">341</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.13 (0.15)</td>
-<td headers="stat_1" class="gt_row gt_center">0.15 (0.15)</td>
-<td headers="stat_2" class="gt_row gt_center">0.10 (0.14)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.08 (0.04, 0.15)</td>
-<td headers="stat_1" class="gt_row gt_center">0.10 (0.05, 0.19)</td>
-<td headers="stat_2" class="gt_row gt_center">0.06 (0.03, 0.10)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">2</td>
-<td headers="stat_1" class="gt_row gt_center">1</td>
-<td headers="stat_2" class="gt_row gt_center">1</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">pf_hp_s</td>
-<td headers="n" class="gt_row gt_center">339</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">0.002</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.20 (0.17)</td>
-<td headers="stat_1" class="gt_row gt_center">0.22 (0.17)</td>
-<td headers="stat_2" class="gt_row gt_center">0.17 (0.16)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.15 (0.08, 0.27)</td>
-<td headers="stat_1" class="gt_row gt_center">0.16 (0.10, 0.30)</td>
-<td headers="stat_2" class="gt_row gt_center">0.13 (0.06, 0.23)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">4</td>
-<td headers="stat_1" class="gt_row gt_center">1</td>
-<td headers="stat_2" class="gt_row gt_center">3</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">pf_do_a</td>
-<td headers="n" class="gt_row gt_center">310</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">0.003</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.024 (0.036)</td>
-<td headers="stat_1" class="gt_row gt_center">0.025 (0.033)</td>
-<td headers="stat_2" class="gt_row gt_center">0.021 (0.040)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.013 (0.008, 0.022)</td>
-<td headers="stat_1" class="gt_row gt_center">0.015 (0.008, 0.027)</td>
-<td headers="stat_2" class="gt_row gt_center">0.011 (0.007, 0.019)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">33</td>
-<td headers="stat_1" class="gt_row gt_center">16</td>
-<td headers="stat_2" class="gt_row gt_center">17</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">pf_pe_s</td>
-<td headers="n" class="gt_row gt_center">307</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">0.15</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.031 (0.032)</td>
-<td headers="stat_1" class="gt_row gt_center">0.033 (0.035)</td>
-<td headers="stat_2" class="gt_row gt_center">0.028 (0.025)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">0.021 (0.014, 0.036)</td>
-<td headers="stat_1" class="gt_row gt_center">0.022 (0.015, 0.037)</td>
-<td headers="stat_2" class="gt_row gt_center">0.020 (0.013, 0.032)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">36</td>
-<td headers="stat_1" class="gt_row gt_center">17</td>
-<td headers="stat_2" class="gt_row gt_center">19</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">source</td>
 <td headers="n" class="gt_row gt_center">343</td>
@@ -3750,54 +3688,6 @@ text-indent: 25px;
 <td headers="stat_1" class="gt_row gt_center">9 (4.4%)</td>
 <td headers="stat_2" class="gt_row gt_center">5 (3.6%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">rural</td>
-<td headers="n" class="gt_row gt_center">343</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Living in Metro area</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">272 (79%)</td>
-<td headers="stat_1" class="gt_row gt_center">184 (89%)</td>
-<td headers="stat_2" class="gt_row gt_center">88 (64%)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Living in rural area</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">31 (9.0%)</td>
-<td headers="stat_1" class="gt_row gt_center">10 (4.9%)</td>
-<td headers="stat_2" class="gt_row gt_center">21 (15%)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">40 (12%)</td>
-<td headers="stat_1" class="gt_row gt_center">12 (5.8%)</td>
-<td headers="stat_2" class="gt_row gt_center">28 (20%)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">smoking</td>
-<td headers="n" class="gt_row gt_center">343</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Don&#39;t smoke or use vape</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">236 (69%)</td>
-<td headers="stat_1" class="gt_row gt_center">157 (76%)</td>
-<td headers="stat_2" class="gt_row gt_center">79 (58%)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Smoke or use vape</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">35 (10%)</td>
-<td headers="stat_1" class="gt_row gt_center">20 (9.7%)</td>
-<td headers="stat_2" class="gt_row gt_center">15 (11%)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">72 (21%)</td>
-<td headers="stat_1" class="gt_row gt_center">29 (14%)</td>
-<td headers="stat_2" class="gt_row gt_center">43 (31%)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">race_final_label</td>
 <td headers="n" class="gt_row gt_center">343</td>
 <td headers="stat_0" class="gt_row gt_center"><br /></td>
@@ -3847,28 +3737,76 @@ text-indent: 25px;
 <td headers="stat_2" class="gt_row gt_center">113 (82%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">ethnicity</td>
-<td headers="n" class="gt_row gt_center">329</td>
+<td headers="n" class="gt_row gt_center">343</td>
 <td headers="stat_0" class="gt_row gt_center"><br /></td>
 <td headers="stat_1" class="gt_row gt_center"><br /></td>
 <td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">0.55</td></tr>
+<td headers="p.value" class="gt_row gt_center">0.81</td></tr>
     <tr><td headers="label" class="gt_row gt_left">    Hispanic</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">12 (3.6%)</td>
-<td headers="stat_1" class="gt_row gt_center">6 (3.0%)</td>
-<td headers="stat_2" class="gt_row gt_center">6 (4.5%)</td>
+<td headers="stat_0" class="gt_row gt_center">12 (3.5%)</td>
+<td headers="stat_1" class="gt_row gt_center">6 (2.9%)</td>
+<td headers="stat_2" class="gt_row gt_center">6 (4.4%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">    Not Hispanic</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">317 (96%)</td>
-<td headers="stat_1" class="gt_row gt_center">191 (97%)</td>
-<td headers="stat_2" class="gt_row gt_center">126 (95%)</td>
+<td headers="stat_0" class="gt_row gt_center">317 (92%)</td>
+<td headers="stat_1" class="gt_row gt_center">191 (93%)</td>
+<td headers="stat_2" class="gt_row gt_center">126 (92%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">14</td>
-<td headers="stat_1" class="gt_row gt_center">9</td>
-<td headers="stat_2" class="gt_row gt_center">5</td>
+<td headers="stat_0" class="gt_row gt_center">14 (4.1%)</td>
+<td headers="stat_1" class="gt_row gt_center">9 (4.4%)</td>
+<td headers="stat_2" class="gt_row gt_center">5 (3.6%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">rural</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Living in Metro area</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">272 (79%)</td>
+<td headers="stat_1" class="gt_row gt_center">184 (89%)</td>
+<td headers="stat_2" class="gt_row gt_center">88 (64%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Living in rural area</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">31 (9.0%)</td>
+<td headers="stat_1" class="gt_row gt_center">10 (4.9%)</td>
+<td headers="stat_2" class="gt_row gt_center">21 (15%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">40 (12%)</td>
+<td headers="stat_1" class="gt_row gt_center">12 (5.8%)</td>
+<td headers="stat_2" class="gt_row gt_center">28 (20%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">smoking</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Don&#39;t smoke or use vape</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">236 (69%)</td>
+<td headers="stat_1" class="gt_row gt_center">157 (76%)</td>
+<td headers="stat_2" class="gt_row gt_center">79 (58%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Smoke or use vape</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">35 (10%)</td>
+<td headers="stat_1" class="gt_row gt_center">20 (9.7%)</td>
+<td headers="stat_2" class="gt_row gt_center">15 (11%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">72 (21%)</td>
+<td headers="stat_1" class="gt_row gt_center">29 (14%)</td>
+<td headers="stat_2" class="gt_row gt_center">43 (31%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">sq_drink_alcohol</td>
 <td headers="n" class="gt_row gt_center">343</td>
@@ -3931,160 +3869,316 @@ text-indent: 25px;
 <td headers="stat_2" class="gt_row gt_center">130 (95%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">sq_self_hep_b</td>
-<td headers="n" class="gt_row gt_center">265</td>
-<td headers="stat_0" class="gt_row gt_center"><br /></td>
-<td headers="stat_1" class="gt_row gt_center"><br /></td>
-<td headers="stat_2" class="gt_row gt_center"><br /></td>
-<td headers="p.value" class="gt_row gt_center">0.25</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    1</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">17 (6.4%)</td>
-<td headers="stat_1" class="gt_row gt_center">9 (5.2%)</td>
-<td headers="stat_2" class="gt_row gt_center">8 (8.8%)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    2</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">248 (94%)</td>
-<td headers="stat_1" class="gt_row gt_center">165 (95%)</td>
-<td headers="stat_2" class="gt_row gt_center">83 (91%)</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
-<td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">78</td>
-<td headers="stat_1" class="gt_row gt_center">32</td>
-<td headers="stat_2" class="gt_row gt_center">46</td>
-<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">sq_self_hep_c</td>
-<td headers="n" class="gt_row gt_center">266</td>
+<td headers="n" class="gt_row gt_center">343</td>
 <td headers="stat_0" class="gt_row gt_center"><br /></td>
 <td headers="stat_1" class="gt_row gt_center"><br /></td>
 <td headers="stat_2" class="gt_row gt_center"><br /></td>
 <td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    1</td>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">18 (6.8%)</td>
-<td headers="stat_1" class="gt_row gt_center">2 (1.1%)</td>
-<td headers="stat_2" class="gt_row gt_center">16 (18%)</td>
+<td headers="stat_0" class="gt_row gt_center">248 (72%)</td>
+<td headers="stat_1" class="gt_row gt_center">165 (80%)</td>
+<td headers="stat_2" class="gt_row gt_center">83 (61%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    2</td>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">248 (93%)</td>
-<td headers="stat_1" class="gt_row gt_center">173 (99%)</td>
-<td headers="stat_2" class="gt_row gt_center">75 (82%)</td>
+<td headers="stat_0" class="gt_row gt_center">78 (23%)</td>
+<td headers="stat_1" class="gt_row gt_center">32 (16%)</td>
+<td headers="stat_2" class="gt_row gt_center">46 (34%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">77</td>
-<td headers="stat_1" class="gt_row gt_center">31</td>
-<td headers="stat_2" class="gt_row gt_center">46</td>
+<td headers="stat_0" class="gt_row gt_center">17 (5.0%)</td>
+<td headers="stat_1" class="gt_row gt_center">9 (4.4%)</td>
+<td headers="stat_2" class="gt_row gt_center">8 (5.8%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">sq_self_hep_c</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">248 (72%)</td>
+<td headers="stat_1" class="gt_row gt_center">173 (84%)</td>
+<td headers="stat_2" class="gt_row gt_center">75 (55%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">77 (22%)</td>
+<td headers="stat_1" class="gt_row gt_center">31 (15%)</td>
+<td headers="stat_2" class="gt_row gt_center">46 (34%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">18 (5.2%)</td>
+<td headers="stat_1" class="gt_row gt_center">2 (1.0%)</td>
+<td headers="stat_2" class="gt_row gt_center">16 (12%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">supp_meds_tylenol</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.012</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">7 (2.0%)</td>
+<td headers="stat_1" class="gt_row gt_center">7 (3.4%)</td>
+<td headers="stat_2" class="gt_row gt_center">0 (0%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">332 (97%)</td>
+<td headers="stat_1" class="gt_row gt_center">195 (95%)</td>
+<td headers="stat_2" class="gt_row gt_center">137 (100%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">4 (1.2%)</td>
+<td headers="stat_1" class="gt_row gt_center">4 (1.9%)</td>
+<td headers="stat_2" class="gt_row gt_center">0 (0%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">supp_meds_steroids</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.013</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">9 (2.6%)</td>
+<td headers="stat_1" class="gt_row gt_center">9 (4.4%)</td>
+<td headers="stat_2" class="gt_row gt_center">0 (0%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">333 (97%)</td>
+<td headers="stat_1" class="gt_row gt_center">196 (95%)</td>
+<td headers="stat_2" class="gt_row gt_center">137 (100%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">1 (0.3%)</td>
+<td headers="stat_1" class="gt_row gt_center">1 (0.5%)</td>
+<td headers="stat_2" class="gt_row gt_center">0 (0%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">sq_water_well</td>
-<td headers="n" class="gt_row gt_center">235</td>
-<td headers="stat_0" class="gt_row gt_center">56 (24%)</td>
-<td headers="stat_1" class="gt_row gt_center">24 (17%)</td>
-<td headers="stat_2" class="gt_row gt_center">32 (35%)</td>
-<td headers="p.value" class="gt_row gt_center">0.001</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.004</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">108</td>
-<td headers="stat_1" class="gt_row gt_center">62</td>
-<td headers="stat_2" class="gt_row gt_center">46</td>
+<td headers="stat_0" class="gt_row gt_center">179 (52%)</td>
+<td headers="stat_1" class="gt_row gt_center">120 (58%)</td>
+<td headers="stat_2" class="gt_row gt_center">59 (43%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">108 (31%)</td>
+<td headers="stat_1" class="gt_row gt_center">62 (30%)</td>
+<td headers="stat_2" class="gt_row gt_center">46 (34%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">56 (16%)</td>
+<td headers="stat_1" class="gt_row gt_center">24 (12%)</td>
+<td headers="stat_2" class="gt_row gt_center">32 (23%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">sq_water_tap_unfiltered</td>
-<td headers="n" class="gt_row gt_center">251</td>
-<td headers="stat_0" class="gt_row gt_center">166 (66%)</td>
-<td headers="stat_1" class="gt_row gt_center">110 (70%)</td>
-<td headers="stat_2" class="gt_row gt_center">56 (60%)</td>
-<td headers="p.value" class="gt_row gt_center">0.13</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.064</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">92</td>
-<td headers="stat_1" class="gt_row gt_center">48</td>
-<td headers="stat_2" class="gt_row gt_center">44</td>
+<td headers="stat_0" class="gt_row gt_center">85 (25%)</td>
+<td headers="stat_1" class="gt_row gt_center">48 (23%)</td>
+<td headers="stat_2" class="gt_row gt_center">37 (27%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">92 (27%)</td>
+<td headers="stat_1" class="gt_row gt_center">48 (23%)</td>
+<td headers="stat_2" class="gt_row gt_center">44 (32%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">166 (48%)</td>
+<td headers="stat_1" class="gt_row gt_center">110 (53%)</td>
+<td headers="stat_2" class="gt_row gt_center">56 (41%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">sq_water_house_filtration</td>
-<td headers="n" class="gt_row gt_center">230</td>
-<td headers="stat_0" class="gt_row gt_center">35 (15%)</td>
-<td headers="stat_1" class="gt_row gt_center">21 (15%)</td>
-<td headers="stat_2" class="gt_row gt_center">14 (15%)</td>
-<td headers="p.value" class="gt_row gt_center">0.95</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.98</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">113</td>
-<td headers="stat_1" class="gt_row gt_center">67</td>
-<td headers="stat_2" class="gt_row gt_center">46</td>
+<td headers="stat_0" class="gt_row gt_center">195 (57%)</td>
+<td headers="stat_1" class="gt_row gt_center">118 (57%)</td>
+<td headers="stat_2" class="gt_row gt_center">77 (56%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">113 (33%)</td>
+<td headers="stat_1" class="gt_row gt_center">67 (33%)</td>
+<td headers="stat_2" class="gt_row gt_center">46 (34%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">35 (10%)</td>
+<td headers="stat_1" class="gt_row gt_center">21 (10%)</td>
+<td headers="stat_2" class="gt_row gt_center">14 (10%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">sq_water_faucet_filter</td>
-<td headers="n" class="gt_row gt_center">238</td>
-<td headers="stat_0" class="gt_row gt_center">105 (44%)</td>
-<td headers="stat_1" class="gt_row gt_center">66 (45%)</td>
-<td headers="stat_2" class="gt_row gt_center">39 (43%)</td>
-<td headers="p.value" class="gt_row gt_center">0.76</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.60</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">105</td>
-<td headers="stat_1" class="gt_row gt_center">59</td>
-<td headers="stat_2" class="gt_row gt_center">46</td>
+<td headers="stat_0" class="gt_row gt_center">133 (39%)</td>
+<td headers="stat_1" class="gt_row gt_center">81 (39%)</td>
+<td headers="stat_2" class="gt_row gt_center">52 (38%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">105 (31%)</td>
+<td headers="stat_1" class="gt_row gt_center">59 (29%)</td>
+<td headers="stat_2" class="gt_row gt_center">46 (34%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">105 (31%)</td>
+<td headers="stat_1" class="gt_row gt_center">66 (32%)</td>
+<td headers="stat_2" class="gt_row gt_center">39 (28%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">sq_water_charcoal_filter</td>
-<td headers="n" class="gt_row gt_center">231</td>
-<td headers="stat_0" class="gt_row gt_center">53 (23%)</td>
-<td headers="stat_1" class="gt_row gt_center">31 (22%)</td>
-<td headers="stat_2" class="gt_row gt_center">22 (24%)</td>
-<td headers="p.value" class="gt_row gt_center">0.72</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.90</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">112</td>
-<td headers="stat_1" class="gt_row gt_center">66</td>
-<td headers="stat_2" class="gt_row gt_center">46</td>
+<td headers="stat_0" class="gt_row gt_center">178 (52%)</td>
+<td headers="stat_1" class="gt_row gt_center">109 (53%)</td>
+<td headers="stat_2" class="gt_row gt_center">69 (50%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">112 (33%)</td>
+<td headers="stat_1" class="gt_row gt_center">66 (32%)</td>
+<td headers="stat_2" class="gt_row gt_center">46 (34%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">53 (15%)</td>
+<td headers="stat_1" class="gt_row gt_center">31 (15%)</td>
+<td headers="stat_2" class="gt_row gt_center">22 (16%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">sq_water_bottled</td>
-<td headers="n" class="gt_row gt_center">244</td>
-<td headers="stat_0" class="gt_row gt_center">164 (67%)</td>
-<td headers="stat_1" class="gt_row gt_center">97 (64%)</td>
-<td headers="stat_2" class="gt_row gt_center">67 (72%)</td>
-<td headers="p.value" class="gt_row gt_center">0.21</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.25</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">99</td>
-<td headers="stat_1" class="gt_row gt_center">55</td>
-<td headers="stat_2" class="gt_row gt_center">44</td>
+<td headers="stat_0" class="gt_row gt_center">80 (23%)</td>
+<td headers="stat_1" class="gt_row gt_center">54 (26%)</td>
+<td headers="stat_2" class="gt_row gt_center">26 (19%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">99 (29%)</td>
+<td headers="stat_1" class="gt_row gt_center">55 (27%)</td>
+<td headers="stat_2" class="gt_row gt_center">44 (32%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">164 (48%)</td>
+<td headers="stat_1" class="gt_row gt_center">97 (47%)</td>
+<td headers="stat_2" class="gt_row gt_center">67 (49%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">sq_water_none</td>
-<td headers="n" class="gt_row gt_center">228</td>
-<td headers="stat_0" class="gt_row gt_center">18 (7.9%)</td>
-<td headers="stat_1" class="gt_row gt_center">6 (4.3%)</td>
-<td headers="stat_2" class="gt_row gt_center">12 (13%)</td>
-<td headers="p.value" class="gt_row gt_center">0.014</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.048</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">115</td>
-<td headers="stat_1" class="gt_row gt_center">68</td>
-<td headers="stat_2" class="gt_row gt_center">47</td>
+<td headers="stat_0" class="gt_row gt_center">210 (61%)</td>
+<td headers="stat_1" class="gt_row gt_center">132 (64%)</td>
+<td headers="stat_2" class="gt_row gt_center">78 (57%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">115 (34%)</td>
+<td headers="stat_1" class="gt_row gt_center">68 (33%)</td>
+<td headers="stat_2" class="gt_row gt_center">47 (34%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">18 (5.2%)</td>
+<td headers="stat_1" class="gt_row gt_center">6 (2.9%)</td>
+<td headers="stat_2" class="gt_row gt_center">12 (8.8%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">sq_water_other_type</td>
-<td headers="n" class="gt_row gt_center">233</td>
-<td headers="stat_0" class="gt_row gt_center">27 (12%)</td>
-<td headers="stat_1" class="gt_row gt_center">16 (11%)</td>
-<td headers="stat_2" class="gt_row gt_center">11 (12%)</td>
-<td headers="p.value" class="gt_row gt_center">0.77</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.61</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">110</td>
-<td headers="stat_1" class="gt_row gt_center">62</td>
-<td headers="stat_2" class="gt_row gt_center">48</td>
+<td headers="stat_0" class="gt_row gt_center">206 (60%)</td>
+<td headers="stat_1" class="gt_row gt_center">128 (62%)</td>
+<td headers="stat_2" class="gt_row gt_center">78 (57%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">110 (32%)</td>
+<td headers="stat_1" class="gt_row gt_center">62 (30%)</td>
+<td headers="stat_2" class="gt_row gt_center">48 (35%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">27 (7.9%)</td>
+<td headers="stat_1" class="gt_row gt_center">16 (7.8%)</td>
+<td headers="stat_2" class="gt_row gt_center">11 (8.0%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">sq_water_dont_know</td>
-<td headers="n" class="gt_row gt_center">228</td>
-<td headers="stat_0" class="gt_row gt_center">18 (7.9%)</td>
-<td headers="stat_1" class="gt_row gt_center">10 (7.2%)</td>
-<td headers="stat_2" class="gt_row gt_center">8 (9.0%)</td>
-<td headers="p.value" class="gt_row gt_center">0.62</td></tr>
-    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+<td headers="n" class="gt_row gt_center">343</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.79</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    No</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
-<td headers="stat_0" class="gt_row gt_center">115</td>
-<td headers="stat_1" class="gt_row gt_center">67</td>
-<td headers="stat_2" class="gt_row gt_center">48</td>
+<td headers="stat_0" class="gt_row gt_center">210 (61%)</td>
+<td headers="stat_1" class="gt_row gt_center">129 (63%)</td>
+<td headers="stat_2" class="gt_row gt_center">81 (59%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown/Not Reported</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">115 (34%)</td>
+<td headers="stat_1" class="gt_row gt_center">67 (33%)</td>
+<td headers="stat_2" class="gt_row gt_center">48 (35%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Yes</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">18 (5.2%)</td>
+<td headers="stat_1" class="gt_row gt_center">10 (4.9%)</td>
+<td headers="stat_2" class="gt_row gt_center">8 (5.8%)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">alt_u_l</td>
 <td headers="n" class="gt_row gt_center">316</td>
@@ -4181,6 +4275,30 @@ text-indent: 25px;
 <td headers="stat_0" class="gt_row gt_center">273 (86%)</td>
 <td headers="stat_1" class="gt_row gt_center">157 (84%)</td>
 <td headers="stat_2" class="gt_row gt_center">116 (90%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">27</td>
+<td headers="stat_1" class="gt_row gt_center">19</td>
+<td headers="stat_2" class="gt_row gt_center">8</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">AST/ALT</td>
+<td headers="n" class="gt_row gt_center">316</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.002</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Mean (SD)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">2.82 (1.93)</td>
+<td headers="stat_1" class="gt_row gt_center">2.59 (1.59)</td>
+<td headers="stat_2" class="gt_row gt_center">3.15 (2.30)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Median (IQR)</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">2.29 (1.77, 3.16)</td>
+<td headers="stat_1" class="gt_row gt_center">2.18 (1.73, 2.86)</td>
+<td headers="stat_2" class="gt_row gt_center">2.44 (2.00, 3.50)</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
     <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
 <td headers="n" class="gt_row gt_center"><br /></td>
@@ -4368,16 +4486,1869 @@ text-indent: 25px;
 <td headers="stat_1" class="gt_row gt_center">15</td>
 <td headers="stat_2" class="gt_row gt_center">6</td>
 <td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">cirrhosis</td>
+<td headers="n" class="gt_row gt_center">316</td>
+<td headers="stat_0" class="gt_row gt_center"><br /></td>
+<td headers="stat_1" class="gt_row gt_center"><br /></td>
+<td headers="stat_2" class="gt_row gt_center"><br /></td>
+<td headers="p.value" class="gt_row gt_center">0.15</td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Healthy</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">8 (2.5%)</td>
+<td headers="stat_1" class="gt_row gt_center">7 (3.7%)</td>
+<td headers="stat_2" class="gt_row gt_center">1 (0.8%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    With cirrhosis</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">308 (97%)</td>
+<td headers="stat_1" class="gt_row gt_center">180 (96%)</td>
+<td headers="stat_2" class="gt_row gt_center">128 (99%)</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
+    <tr><td headers="label" class="gt_row gt_left">    Unknown</td>
+<td headers="n" class="gt_row gt_center"><br /></td>
+<td headers="stat_0" class="gt_row gt_center">27</td>
+<td headers="stat_1" class="gt_row gt_center">19</td>
+<td headers="stat_2" class="gt_row gt_center">8</td>
+<td headers="p.value" class="gt_row gt_center"><br /></td></tr>
   </tbody>
   
   <tfoot class="gt_footnotes">
     <tr>
-      <td class="gt_footnote" colspan="6"><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"><sup>1</sup></span> n (%)</td>
+      <td class="gt_footnote" colspan="6"><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;"><sup>1</sup></span> <span class="gt_from_md">n (%)</span></td>
     </tr>
     <tr>
-      <td class="gt_footnote" colspan="6"><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"><sup>2</sup></span> Wilcoxon rank sum test; Pearson’s Chi-squared test; Fisher’s exact test</td>
+      <td class="gt_footnote" colspan="6"><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;"><sup>2</sup></span> <span class="gt_from_md">Wilcoxon rank sum test; Pearson’s Chi-squared test; Fisher’s exact test</span></td>
     </tr>
   </tfoot>
+</table>
+</div>
+</div>
+<div id="correlation-between-pfas-and-potential-confounders" class="section level1">
+<h1>Correlation between PFAS and potential confounders</h1>
+<pre class="r"><code>covars &lt;- c(&quot;source&quot;, &quot;age_at_enrollment&quot;,&quot;sex&quot;, 
+            &quot;race_eth_label&quot;, &quot;race_final_label&quot;,&quot;ethnicity&quot;,
+            &quot;rural&quot;, &quot;smoking&quot;,&quot;sq_drink_alcohol&quot;,&quot;sq_average_drink_per_day&quot;,&quot;sq_self_hep_b&quot;,
+            &quot;sq_self_hep_c&quot;,&quot;supp_meds_tylenol&quot;,&quot;supp_meds_steroids&quot;,&quot;sq_water_well&quot;,
+            &quot;sq_water_tap_unfiltered&quot;,&quot;sq_water_house_filtration&quot;, &quot;sq_water_faucet_filter&quot;,
+            &quot;sq_water_charcoal_filter&quot;,&quot;sq_water_bottled&quot;,&quot;sq_water_none&quot;,&quot;sq_water_other_type&quot;)
+
+# Function to perform linear model for all potential confounders
+test_lm &lt;- function(df, pfas, covar) {
+  result &lt;- tryCatch({
+    model &lt;- lm(as.formula(paste(pfas, &quot;~&quot;, covar)), data = df)
+    tidy(model)
+  }, error = function(e) {
+    tibble(term = covar, estimate = NA, std.error = NA, statistic = NA, p.value = NA)
+  })
+  result
+}
+
+# Performing the tests and collecting results
+results &lt;- list()
+
+for (pfas in pfas_name_analysis) {
+  for (covar in covars) {
+    result &lt;- test_lm(data, pfas, covar)
+    result &lt;- result %&gt;%
+      filter(term != &quot;(Intercept)&quot;) %&gt;%  # remove intercept term from results
+      mutate(pfas = pfas, covariate = covar)
+    results &lt;- append(results, list(result))
+  }
+}
+
+# Combine results into a single data frame
+results_df &lt;- bind_rows(results) %&gt;%
+  dplyr::select(pfas, term, everything(), -covariate)
+
+# Filter for significant results
+significant_results &lt;- results_df %&gt;%
+  filter(p.value &lt; 0.05)
+
+print(significant_results)</code></pre>
+<pre><code>## # A tibble: 86 × 6
+##    pfas    term                             estimate std.error statistic p.value
+##    &lt;chr&gt;   &lt;chr&gt;                               &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 pf_do_a sourceUNC                        -0.0174    0.00872     -1.99 4.69e-2
+##  2 pf_do_a sq_drink_alcoholYes, current dr…  0.0116    0.00497      2.34 1.99e-2
+##  3 pf_do_a sq_water_bottledYes              -0.00929   0.00459     -2.02 4.36e-2
+##  4 pf_hp_a sourceNCSU                       -0.0190    0.00685     -2.77 5.92e-3
+##  5 pf_hp_a race_final_labelAmerican Indian… -0.198     0.0436      -4.56 7.05e-6
+##  6 pf_hp_a race_final_labelAsian            -0.170     0.0459      -3.70 2.46e-4
+##  7 pf_hp_a race_final_labelAsian/Pacific I… -0.169     0.0411      -4.12 4.61e-5
+##  8 pf_hp_a race_final_labelBlack            -0.187     0.0359      -5.20 3.27e-7
+##  9 pf_hp_a race_final_labelMore than one r… -0.151     0.0616      -2.45 1.47e-2
+## 10 pf_hp_a race_final_labelOther            -0.187     0.0384      -4.88 1.59e-6
+## # ℹ 76 more rows</code></pre>
+<pre class="r"><code># Create a formatted table using gt
+significant_results %&gt;%
+  gt() %&gt;%
+  tab_header(
+    title = &quot;Significant Associations between PFAS and potential confounders From Simple LR&quot;
+  ) %&gt;%
+  cols_label(
+    pfas = &quot;PFAS&quot;,
+    term = &quot;Covariate&quot;,
+    estimate = &quot;Estimate&quot;,
+    std.error = &quot;Standard Error&quot;,
+    statistic = &quot;Statistic&quot;,
+    p.value = &quot;P-value&quot;
+  ) %&gt;%
+  fmt_number(
+    columns = c(estimate, std.error, statistic, p.value),
+    decimals = 3
+  ) %&gt;%
+  tab_source_note(
+    source_note = &quot;Significant results with p-value &lt; 0.05&quot;
+  )</code></pre>
+<div id="kzeptiatjr" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#kzeptiatjr table {
+font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+#kzeptiatjr thead, #kzeptiatjr tbody, #kzeptiatjr tfoot, #kzeptiatjr tr, #kzeptiatjr td, #kzeptiatjr th {
+border-style: none;
+}
+#kzeptiatjr p {
+margin: 0;
+padding: 0;
+}
+#kzeptiatjr .gt_table {
+display: table;
+border-collapse: collapse;
+line-height: normal;
+margin-left: auto;
+margin-right: auto;
+color: #333333;
+font-size: 16px;
+font-weight: normal;
+font-style: normal;
+background-color: #FFFFFF;
+width: auto;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #A8A8A8;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #A8A8A8;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+}
+#kzeptiatjr .gt_caption {
+padding-top: 4px;
+padding-bottom: 4px;
+}
+#kzeptiatjr .gt_title {
+color: #333333;
+font-size: 125%;
+font-weight: initial;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-color: #FFFFFF;
+border-bottom-width: 0;
+}
+#kzeptiatjr .gt_subtitle {
+color: #333333;
+font-size: 85%;
+font-weight: initial;
+padding-top: 3px;
+padding-bottom: 5px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-color: #FFFFFF;
+border-top-width: 0;
+}
+#kzeptiatjr .gt_heading {
+background-color: #FFFFFF;
+text-align: center;
+border-bottom-color: #FFFFFF;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#kzeptiatjr .gt_bottom_border {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#kzeptiatjr .gt_col_headings {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#kzeptiatjr .gt_col_heading {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: normal;
+text-transform: inherit;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 6px;
+padding-left: 5px;
+padding-right: 5px;
+overflow-x: hidden;
+}
+#kzeptiatjr .gt_column_spanner_outer {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: normal;
+text-transform: inherit;
+padding-top: 0;
+padding-bottom: 0;
+padding-left: 4px;
+padding-right: 4px;
+}
+#kzeptiatjr .gt_column_spanner_outer:first-child {
+padding-left: 0;
+}
+#kzeptiatjr .gt_column_spanner_outer:last-child {
+padding-right: 0;
+}
+#kzeptiatjr .gt_column_spanner {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 5px;
+overflow-x: hidden;
+display: inline-block;
+width: 100%;
+}
+#kzeptiatjr .gt_spanner_row {
+border-bottom-style: hidden;
+}
+#kzeptiatjr .gt_group_heading {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+text-align: left;
+}
+#kzeptiatjr .gt_empty_group_heading {
+padding: 0.5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: middle;
+}
+#kzeptiatjr .gt_from_md > :first-child {
+margin-top: 0;
+}
+#kzeptiatjr .gt_from_md > :last-child {
+margin-bottom: 0;
+}
+#kzeptiatjr .gt_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+margin: 10px;
+border-top-style: solid;
+border-top-width: 1px;
+border-top-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+overflow-x: hidden;
+}
+#kzeptiatjr .gt_stub {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+}
+#kzeptiatjr .gt_stub_row_group {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+vertical-align: top;
+}
+#kzeptiatjr .gt_row_group_first td {
+border-top-width: 2px;
+}
+#kzeptiatjr .gt_row_group_first th {
+border-top-width: 2px;
+}
+#kzeptiatjr .gt_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#kzeptiatjr .gt_first_summary_row {
+border-top-style: solid;
+border-top-color: #D3D3D3;
+}
+#kzeptiatjr .gt_first_summary_row.thick {
+border-top-width: 2px;
+}
+#kzeptiatjr .gt_last_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#kzeptiatjr .gt_grand_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#kzeptiatjr .gt_first_grand_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-style: double;
+border-top-width: 6px;
+border-top-color: #D3D3D3;
+}
+#kzeptiatjr .gt_last_grand_summary_row_top {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: double;
+border-bottom-width: 6px;
+border-bottom-color: #D3D3D3;
+}
+#kzeptiatjr .gt_striped {
+background-color: rgba(128, 128, 128, 0.05);
+}
+#kzeptiatjr .gt_table_body {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#kzeptiatjr .gt_footnotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#kzeptiatjr .gt_footnote {
+margin: 0px;
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#kzeptiatjr .gt_sourcenotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#kzeptiatjr .gt_sourcenote {
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#kzeptiatjr .gt_left {
+text-align: left;
+}
+#kzeptiatjr .gt_center {
+text-align: center;
+}
+#kzeptiatjr .gt_right {
+text-align: right;
+font-variant-numeric: tabular-nums;
+}
+#kzeptiatjr .gt_font_normal {
+font-weight: normal;
+}
+#kzeptiatjr .gt_font_bold {
+font-weight: bold;
+}
+#kzeptiatjr .gt_font_italic {
+font-style: italic;
+}
+#kzeptiatjr .gt_super {
+font-size: 65%;
+}
+#kzeptiatjr .gt_footnote_marks {
+font-size: 75%;
+vertical-align: 0.4em;
+position: initial;
+}
+#kzeptiatjr .gt_asterisk {
+font-size: 100%;
+vertical-align: 0;
+}
+#kzeptiatjr .gt_indent_1 {
+text-indent: 5px;
+}
+#kzeptiatjr .gt_indent_2 {
+text-indent: 10px;
+}
+#kzeptiatjr .gt_indent_3 {
+text-indent: 15px;
+}
+#kzeptiatjr .gt_indent_4 {
+text-indent: 20px;
+}
+#kzeptiatjr .gt_indent_5 {
+text-indent: 25px;
+}
+#kzeptiatjr .katex-display {
+display: inline-flex !important;
+margin-bottom: 0.75em !important;
+}
+#kzeptiatjr div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+height: 0px !important;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_heading">
+      <td colspan="6" class="gt_heading gt_title gt_font_normal gt_bottom_border" style>Significant Associations between PFAS and potential confounders From Simple LR</td>
+    </tr>
+    
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="PFAS">PFAS</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="Covariate">Covariate</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Estimate">Estimate</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Standard Error">Standard Error</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Statistic">Statistic</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="P-value">P-value</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="pfas" class="gt_row gt_left">pf_do_a</td>
+<td headers="term" class="gt_row gt_left">sourceUNC</td>
+<td headers="estimate" class="gt_row gt_right">−0.017</td>
+<td headers="std.error" class="gt_row gt_right">0.009</td>
+<td headers="statistic" class="gt_row gt_right">−1.994</td>
+<td headers="p.value" class="gt_row gt_right">0.047</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_do_a</td>
+<td headers="term" class="gt_row gt_left">sq_drink_alcoholYes, current drinker</td>
+<td headers="estimate" class="gt_row gt_right">0.012</td>
+<td headers="std.error" class="gt_row gt_right">0.005</td>
+<td headers="statistic" class="gt_row gt_right">2.338</td>
+<td headers="p.value" class="gt_row gt_right">0.020</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_do_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledYes</td>
+<td headers="estimate" class="gt_row gt_right">−0.009</td>
+<td headers="std.error" class="gt_row gt_right">0.005</td>
+<td headers="statistic" class="gt_row gt_right">−2.025</td>
+<td headers="p.value" class="gt_row gt_right">0.044</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_a</td>
+<td headers="term" class="gt_row gt_left">sourceNCSU</td>
+<td headers="estimate" class="gt_row gt_right">−0.019</td>
+<td headers="std.error" class="gt_row gt_right">0.007</td>
+<td headers="statistic" class="gt_row gt_right">−2.768</td>
+<td headers="p.value" class="gt_row gt_right">0.006</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_a</td>
+<td headers="term" class="gt_row gt_left">race_final_labelAmerican Indian/Alaskan Native</td>
+<td headers="estimate" class="gt_row gt_right">−0.198</td>
+<td headers="std.error" class="gt_row gt_right">0.044</td>
+<td headers="statistic" class="gt_row gt_right">−4.557</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_a</td>
+<td headers="term" class="gt_row gt_left">race_final_labelAsian</td>
+<td headers="estimate" class="gt_row gt_right">−0.170</td>
+<td headers="std.error" class="gt_row gt_right">0.046</td>
+<td headers="statistic" class="gt_row gt_right">−3.703</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_a</td>
+<td headers="term" class="gt_row gt_left">race_final_labelAsian/Pacific Islander</td>
+<td headers="estimate" class="gt_row gt_right">−0.169</td>
+<td headers="std.error" class="gt_row gt_right">0.041</td>
+<td headers="statistic" class="gt_row gt_right">−4.124</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_a</td>
+<td headers="term" class="gt_row gt_left">race_final_labelBlack</td>
+<td headers="estimate" class="gt_row gt_right">−0.187</td>
+<td headers="std.error" class="gt_row gt_right">0.036</td>
+<td headers="statistic" class="gt_row gt_right">−5.202</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_a</td>
+<td headers="term" class="gt_row gt_left">race_final_labelMore than one race</td>
+<td headers="estimate" class="gt_row gt_right">−0.151</td>
+<td headers="std.error" class="gt_row gt_right">0.062</td>
+<td headers="statistic" class="gt_row gt_right">−2.451</td>
+<td headers="p.value" class="gt_row gt_right">0.015</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_a</td>
+<td headers="term" class="gt_row gt_left">race_final_labelOther</td>
+<td headers="estimate" class="gt_row gt_right">−0.187</td>
+<td headers="std.error" class="gt_row gt_right">0.038</td>
+<td headers="statistic" class="gt_row gt_right">−4.879</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_a</td>
+<td headers="term" class="gt_row gt_left">race_final_labelUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.193</td>
+<td headers="std.error" class="gt_row gt_right">0.040</td>
+<td headers="statistic" class="gt_row gt_right">−4.779</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_a</td>
+<td headers="term" class="gt_row gt_left">race_final_labelWhite</td>
+<td headers="estimate" class="gt_row gt_right">−0.159</td>
+<td headers="std.error" class="gt_row gt_right">0.036</td>
+<td headers="statistic" class="gt_row gt_right">−4.442</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_s</td>
+<td headers="term" class="gt_row gt_left">sourceUNC</td>
+<td headers="estimate" class="gt_row gt_right">−0.089</td>
+<td headers="std.error" class="gt_row gt_right">0.044</td>
+<td headers="statistic" class="gt_row gt_right">−2.017</td>
+<td headers="p.value" class="gt_row gt_right">0.044</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_s</td>
+<td headers="term" class="gt_row gt_left">age_at_enrollment</td>
+<td headers="estimate" class="gt_row gt_right">0.006</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">7.001</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_s</td>
+<td headers="term" class="gt_row gt_left">sexMale</td>
+<td headers="estimate" class="gt_row gt_right">0.052</td>
+<td headers="std.error" class="gt_row gt_right">0.018</td>
+<td headers="statistic" class="gt_row gt_right">2.844</td>
+<td headers="p.value" class="gt_row gt_right">0.005</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_s</td>
+<td headers="term" class="gt_row gt_left">smokingSmoke or use vape</td>
+<td headers="estimate" class="gt_row gt_right">−0.102</td>
+<td headers="std.error" class="gt_row gt_right">0.031</td>
+<td headers="statistic" class="gt_row gt_right">−3.340</td>
+<td headers="p.value" class="gt_row gt_right">0.001</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_s</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.059</td>
+<td headers="std.error" class="gt_row gt_right">0.024</td>
+<td headers="statistic" class="gt_row gt_right">−2.458</td>
+<td headers="p.value" class="gt_row gt_right">0.014</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hp_s</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledYes</td>
+<td headers="estimate" class="gt_row gt_right">−0.074</td>
+<td headers="std.error" class="gt_row gt_right">0.023</td>
+<td headers="statistic" class="gt_row gt_right">−3.212</td>
+<td headers="p.value" class="gt_row gt_right">0.001</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sourceEmory</td>
+<td headers="estimate" class="gt_row gt_right">−0.005</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">−3.606</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sourceUNC</td>
+<td headers="estimate" class="gt_row gt_right">0.009</td>
+<td headers="std.error" class="gt_row gt_right">0.003</td>
+<td headers="statistic" class="gt_row gt_right">3.406</td>
+<td headers="p.value" class="gt_row gt_right">0.001</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">smokingSmoke or use vape</td>
+<td headers="estimate" class="gt_row gt_right">0.004</td>
+<td headers="std.error" class="gt_row gt_right">0.002</td>
+<td headers="statistic" class="gt_row gt_right">2.158</td>
+<td headers="p.value" class="gt_row gt_right">0.032</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">smokingUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.004</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">3.698</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_drink_alcoholUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.004</td>
+<td headers="std.error" class="gt_row gt_right">0.002</td>
+<td headers="statistic" class="gt_row gt_right">2.738</td>
+<td headers="p.value" class="gt_row gt_right">0.006</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_self_hep_bUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.003</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">3.020</td>
+<td headers="p.value" class="gt_row gt_right">0.003</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_self_hep_cUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.004</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">3.441</td>
+<td headers="p.value" class="gt_row gt_right">0.001</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_wellUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.003</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">2.558</td>
+<td headers="p.value" class="gt_row gt_right">0.011</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_tap_unfilteredUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.004</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">2.680</td>
+<td headers="p.value" class="gt_row gt_right">0.008</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_house_filtrationUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.003</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">2.555</td>
+<td headers="p.value" class="gt_row gt_right">0.011</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_faucet_filterUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.003</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">2.757</td>
+<td headers="p.value" class="gt_row gt_right">0.006</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_charcoal_filterUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.003</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">2.622</td>
+<td headers="p.value" class="gt_row gt_right">0.009</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.003</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">2.349</td>
+<td headers="p.value" class="gt_row gt_right">0.019</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_noneUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.003</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">2.639</td>
+<td headers="p.value" class="gt_row gt_right">0.009</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_other_typeUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.003</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">3.163</td>
+<td headers="p.value" class="gt_row gt_right">0.002</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_other_typeYes</td>
+<td headers="estimate" class="gt_row gt_right">0.006</td>
+<td headers="std.error" class="gt_row gt_right">0.002</td>
+<td headers="statistic" class="gt_row gt_right">2.808</td>
+<td headers="p.value" class="gt_row gt_right">0.005</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_s</td>
+<td headers="term" class="gt_row gt_left">age_at_enrollment</td>
+<td headers="estimate" class="gt_row gt_right">0.036</td>
+<td headers="std.error" class="gt_row gt_right">0.009</td>
+<td headers="statistic" class="gt_row gt_right">4.237</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_s</td>
+<td headers="term" class="gt_row gt_left">smokingUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.362</td>
+<td headers="std.error" class="gt_row gt_right">0.183</td>
+<td headers="statistic" class="gt_row gt_right">−1.974</td>
+<td headers="p.value" class="gt_row gt_right">0.049</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_s</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.771</td>
+<td headers="std.error" class="gt_row gt_right">0.219</td>
+<td headers="statistic" class="gt_row gt_right">−3.516</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_hx_s</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledYes</td>
+<td headers="estimate" class="gt_row gt_right">−0.671</td>
+<td headers="std.error" class="gt_row gt_right">0.212</td>
+<td headers="statistic" class="gt_row gt_right">−3.169</td>
+<td headers="p.value" class="gt_row gt_right">0.002</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_a</td>
+<td headers="term" class="gt_row gt_left">sourceEmory</td>
+<td headers="estimate" class="gt_row gt_right">0.019</td>
+<td headers="std.error" class="gt_row gt_right">0.005</td>
+<td headers="statistic" class="gt_row gt_right">4.093</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_a</td>
+<td headers="term" class="gt_row gt_left">sourceNCSU</td>
+<td headers="estimate" class="gt_row gt_right">0.011</td>
+<td headers="std.error" class="gt_row gt_right">0.004</td>
+<td headers="statistic" class="gt_row gt_right">2.607</td>
+<td headers="p.value" class="gt_row gt_right">0.009</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_a</td>
+<td headers="term" class="gt_row gt_left">sourceUNC</td>
+<td headers="estimate" class="gt_row gt_right">0.030</td>
+<td headers="std.error" class="gt_row gt_right">0.008</td>
+<td headers="statistic" class="gt_row gt_right">3.662</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_house_filtrationYes</td>
+<td headers="estimate" class="gt_row gt_right">0.016</td>
+<td headers="std.error" class="gt_row gt_right">0.006</td>
+<td headers="statistic" class="gt_row gt_right">2.742</td>
+<td headers="p.value" class="gt_row gt_right">0.006</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_s</td>
+<td headers="term" class="gt_row gt_left">sourceNCSU</td>
+<td headers="estimate" class="gt_row gt_right">0.008</td>
+<td headers="std.error" class="gt_row gt_right">0.004</td>
+<td headers="statistic" class="gt_row gt_right">2.077</td>
+<td headers="p.value" class="gt_row gt_right">0.038</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_s</td>
+<td headers="term" class="gt_row gt_left">race_final_labelAmerican Indian/Alaskan Native</td>
+<td headers="estimate" class="gt_row gt_right">−0.062</td>
+<td headers="std.error" class="gt_row gt_right">0.026</td>
+<td headers="statistic" class="gt_row gt_right">−2.375</td>
+<td headers="p.value" class="gt_row gt_right">0.018</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_s</td>
+<td headers="term" class="gt_row gt_left">race_final_labelAsian/Pacific Islander</td>
+<td headers="estimate" class="gt_row gt_right">−0.055</td>
+<td headers="std.error" class="gt_row gt_right">0.025</td>
+<td headers="statistic" class="gt_row gt_right">−2.217</td>
+<td headers="p.value" class="gt_row gt_right">0.027</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_s</td>
+<td headers="term" class="gt_row gt_left">race_final_labelBlack</td>
+<td headers="estimate" class="gt_row gt_right">−0.051</td>
+<td headers="std.error" class="gt_row gt_right">0.022</td>
+<td headers="statistic" class="gt_row gt_right">−2.355</td>
+<td headers="p.value" class="gt_row gt_right">0.019</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_s</td>
+<td headers="term" class="gt_row gt_left">race_final_labelOther</td>
+<td headers="estimate" class="gt_row gt_right">−0.053</td>
+<td headers="std.error" class="gt_row gt_right">0.023</td>
+<td headers="statistic" class="gt_row gt_right">−2.281</td>
+<td headers="p.value" class="gt_row gt_right">0.023</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_s</td>
+<td headers="term" class="gt_row gt_left">race_final_labelUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.053</td>
+<td headers="std.error" class="gt_row gt_right">0.024</td>
+<td headers="statistic" class="gt_row gt_right">−2.180</td>
+<td headers="p.value" class="gt_row gt_right">0.030</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_s</td>
+<td headers="term" class="gt_row gt_left">sq_average_drink_per_dayUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.016</td>
+<td headers="std.error" class="gt_row gt_right">0.007</td>
+<td headers="statistic" class="gt_row gt_right">−2.200</td>
+<td headers="p.value" class="gt_row gt_right">0.028</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_s</td>
+<td headers="term" class="gt_row gt_left">sq_water_tap_unfilteredYes</td>
+<td headers="estimate" class="gt_row gt_right">0.008</td>
+<td headers="std.error" class="gt_row gt_right">0.004</td>
+<td headers="statistic" class="gt_row gt_right">1.996</td>
+<td headers="p.value" class="gt_row gt_right">0.047</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_s</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.009</td>
+<td headers="std.error" class="gt_row gt_right">0.004</td>
+<td headers="statistic" class="gt_row gt_right">−2.186</td>
+<td headers="p.value" class="gt_row gt_right">0.029</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_pe_s</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledYes</td>
+<td headers="estimate" class="gt_row gt_right">−0.016</td>
+<td headers="std.error" class="gt_row gt_right">0.004</td>
+<td headers="statistic" class="gt_row gt_right">−3.935</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">sourceNCSU</td>
+<td headers="estimate" class="gt_row gt_right">0.041</td>
+<td headers="std.error" class="gt_row gt_right">0.018</td>
+<td headers="statistic" class="gt_row gt_right">2.246</td>
+<td headers="p.value" class="gt_row gt_right">0.025</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">sourceUNC</td>
+<td headers="estimate" class="gt_row gt_right">−0.084</td>
+<td headers="std.error" class="gt_row gt_right">0.036</td>
+<td headers="statistic" class="gt_row gt_right">−2.309</td>
+<td headers="p.value" class="gt_row gt_right">0.021</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">age_at_enrollment</td>
+<td headers="estimate" class="gt_row gt_right">0.002</td>
+<td headers="std.error" class="gt_row gt_right">0.001</td>
+<td headers="statistic" class="gt_row gt_right">2.654</td>
+<td headers="p.value" class="gt_row gt_right">0.008</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">race_eth_labelNHO</td>
+<td headers="estimate" class="gt_row gt_right">0.107</td>
+<td headers="std.error" class="gt_row gt_right">0.049</td>
+<td headers="statistic" class="gt_row gt_right">2.174</td>
+<td headers="p.value" class="gt_row gt_right">0.030</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">race_final_labelAsian/Pacific Islander</td>
+<td headers="estimate" class="gt_row gt_right">0.275</td>
+<td headers="std.error" class="gt_row gt_right">0.115</td>
+<td headers="statistic" class="gt_row gt_right">2.396</td>
+<td headers="p.value" class="gt_row gt_right">0.017</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">smokingSmoke or use vape</td>
+<td headers="estimate" class="gt_row gt_right">−0.080</td>
+<td headers="std.error" class="gt_row gt_right">0.025</td>
+<td headers="statistic" class="gt_row gt_right">−3.141</td>
+<td headers="p.value" class="gt_row gt_right">0.002</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">smokingUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.046</td>
+<td headers="std.error" class="gt_row gt_right">0.016</td>
+<td headers="statistic" class="gt_row gt_right">−2.786</td>
+<td headers="p.value" class="gt_row gt_right">0.006</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">sq_drink_alcoholYes, current drinker</td>
+<td headers="estimate" class="gt_row gt_right">0.074</td>
+<td headers="std.error" class="gt_row gt_right">0.021</td>
+<td headers="statistic" class="gt_row gt_right">3.557</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">sq_average_drink_per_dayUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.085</td>
+<td headers="std.error" class="gt_row gt_right">0.034</td>
+<td headers="statistic" class="gt_row gt_right">−2.489</td>
+<td headers="p.value" class="gt_row gt_right">0.013</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">sq_self_hep_bUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.032</td>
+<td headers="std.error" class="gt_row gt_right">0.016</td>
+<td headers="statistic" class="gt_row gt_right">−2.017</td>
+<td headers="p.value" class="gt_row gt_right">0.044</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">sq_self_hep_cUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.033</td>
+<td headers="std.error" class="gt_row gt_right">0.016</td>
+<td headers="statistic" class="gt_row gt_right">−2.040</td>
+<td headers="p.value" class="gt_row gt_right">0.042</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.050</td>
+<td headers="std.error" class="gt_row gt_right">0.020</td>
+<td headers="statistic" class="gt_row gt_right">−2.500</td>
+<td headers="p.value" class="gt_row gt_right">0.013</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pf_un_a</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledYes</td>
+<td headers="estimate" class="gt_row gt_right">−0.040</td>
+<td headers="std.error" class="gt_row gt_right">0.019</td>
+<td headers="statistic" class="gt_row gt_right">−2.076</td>
+<td headers="p.value" class="gt_row gt_right">0.039</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfba</td>
+<td headers="term" class="gt_row gt_left">sourceEmory</td>
+<td headers="estimate" class="gt_row gt_right">0.032</td>
+<td headers="std.error" class="gt_row gt_right">0.009</td>
+<td headers="statistic" class="gt_row gt_right">3.516</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfba</td>
+<td headers="term" class="gt_row gt_left">sexMale</td>
+<td headers="estimate" class="gt_row gt_right">0.020</td>
+<td headers="std.error" class="gt_row gt_right">0.007</td>
+<td headers="statistic" class="gt_row gt_right">2.994</td>
+<td headers="p.value" class="gt_row gt_right">0.003</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfba</td>
+<td headers="term" class="gt_row gt_left">race_final_labelBlack</td>
+<td headers="estimate" class="gt_row gt_right">−0.092</td>
+<td headers="std.error" class="gt_row gt_right">0.045</td>
+<td headers="statistic" class="gt_row gt_right">−2.037</td>
+<td headers="p.value" class="gt_row gt_right">0.042</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfba</td>
+<td headers="term" class="gt_row gt_left">race_final_labelOther</td>
+<td headers="estimate" class="gt_row gt_right">−0.099</td>
+<td headers="std.error" class="gt_row gt_right">0.048</td>
+<td headers="statistic" class="gt_row gt_right">−2.053</td>
+<td headers="p.value" class="gt_row gt_right">0.041</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfba</td>
+<td headers="term" class="gt_row gt_left">sq_drink_alcoholNo, never drinker</td>
+<td headers="estimate" class="gt_row gt_right">−0.021</td>
+<td headers="std.error" class="gt_row gt_right">0.010</td>
+<td headers="statistic" class="gt_row gt_right">−2.105</td>
+<td headers="p.value" class="gt_row gt_right">0.036</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfba</td>
+<td headers="term" class="gt_row gt_left">sq_drink_alcoholUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.019</td>
+<td headers="std.error" class="gt_row gt_right">0.009</td>
+<td headers="statistic" class="gt_row gt_right">−2.050</td>
+<td headers="p.value" class="gt_row gt_right">0.041</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfba</td>
+<td headers="term" class="gt_row gt_left">sq_drink_alcoholYes, current drinker</td>
+<td headers="estimate" class="gt_row gt_right">−0.025</td>
+<td headers="std.error" class="gt_row gt_right">0.009</td>
+<td headers="statistic" class="gt_row gt_right">−2.677</td>
+<td headers="p.value" class="gt_row gt_right">0.008</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfba</td>
+<td headers="term" class="gt_row gt_left">sq_water_faucet_filterYes</td>
+<td headers="estimate" class="gt_row gt_right">0.027</td>
+<td headers="std.error" class="gt_row gt_right">0.008</td>
+<td headers="statistic" class="gt_row gt_right">3.336</td>
+<td headers="p.value" class="gt_row gt_right">0.001</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfbs</td>
+<td headers="term" class="gt_row gt_left">ruralLiving in rural area</td>
+<td headers="estimate" class="gt_row gt_right">0.042</td>
+<td headers="std.error" class="gt_row gt_right">0.019</td>
+<td headers="statistic" class="gt_row gt_right">2.172</td>
+<td headers="p.value" class="gt_row gt_right">0.030</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfbs</td>
+<td headers="term" class="gt_row gt_left">sq_average_drink_per_day3-4 alcoholic drinks per day</td>
+<td headers="estimate" class="gt_row gt_right">0.150</td>
+<td headers="std.error" class="gt_row gt_right">0.049</td>
+<td headers="statistic" class="gt_row gt_right">3.076</td>
+<td headers="p.value" class="gt_row gt_right">0.002</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfda</td>
+<td headers="term" class="gt_row gt_left">age_at_enrollment</td>
+<td headers="estimate" class="gt_row gt_right">0.005</td>
+<td headers="std.error" class="gt_row gt_right">0.002</td>
+<td headers="statistic" class="gt_row gt_right">2.540</td>
+<td headers="p.value" class="gt_row gt_right">0.012</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfda</td>
+<td headers="term" class="gt_row gt_left">smokingSmoke or use vape</td>
+<td headers="estimate" class="gt_row gt_right">−0.154</td>
+<td headers="std.error" class="gt_row gt_right">0.058</td>
+<td headers="statistic" class="gt_row gt_right">−2.668</td>
+<td headers="p.value" class="gt_row gt_right">0.008</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfda</td>
+<td headers="term" class="gt_row gt_left">smokingUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.086</td>
+<td headers="std.error" class="gt_row gt_right">0.037</td>
+<td headers="statistic" class="gt_row gt_right">−2.324</td>
+<td headers="p.value" class="gt_row gt_right">0.021</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfda</td>
+<td headers="term" class="gt_row gt_left">sq_drink_alcoholYes, current drinker</td>
+<td headers="estimate" class="gt_row gt_right">0.177</td>
+<td headers="std.error" class="gt_row gt_right">0.047</td>
+<td headers="statistic" class="gt_row gt_right">3.784</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfda</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.109</td>
+<td headers="std.error" class="gt_row gt_right">0.045</td>
+<td headers="statistic" class="gt_row gt_right">−2.415</td>
+<td headers="p.value" class="gt_row gt_right">0.016</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfda</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledYes</td>
+<td headers="estimate" class="gt_row gt_right">−0.105</td>
+<td headers="std.error" class="gt_row gt_right">0.044</td>
+<td headers="statistic" class="gt_row gt_right">−2.408</td>
+<td headers="p.value" class="gt_row gt_right">0.017</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfna</td>
+<td headers="term" class="gt_row gt_left">age_at_enrollment</td>
+<td headers="estimate" class="gt_row gt_right">0.012</td>
+<td headers="std.error" class="gt_row gt_right">0.003</td>
+<td headers="statistic" class="gt_row gt_right">4.197</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfna</td>
+<td headers="term" class="gt_row gt_left">smokingSmoke or use vape</td>
+<td headers="estimate" class="gt_row gt_right">−0.294</td>
+<td headers="std.error" class="gt_row gt_right">0.096</td>
+<td headers="statistic" class="gt_row gt_right">−3.079</td>
+<td headers="p.value" class="gt_row gt_right">0.002</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfna</td>
+<td headers="term" class="gt_row gt_left">smokingUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.130</td>
+<td headers="std.error" class="gt_row gt_right">0.062</td>
+<td headers="statistic" class="gt_row gt_right">−2.107</td>
+<td headers="p.value" class="gt_row gt_right">0.036</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfna</td>
+<td headers="term" class="gt_row gt_left">sq_drink_alcoholYes, current drinker</td>
+<td headers="estimate" class="gt_row gt_right">0.292</td>
+<td headers="std.error" class="gt_row gt_right">0.078</td>
+<td headers="statistic" class="gt_row gt_right">3.757</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="pfas" class="gt_row gt_left">pfna</td>
+<td headers="term" class="gt_row gt_left">sq_water_bottledUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.169</td>
+<td headers="std.error" class="gt_row gt_right">0.075</td>
+<td headers="statistic" class="gt_row gt_right">−2.253</td>
+<td headers="p.value" class="gt_row gt_right">0.025</td></tr>
+  </tbody>
+  <tfoot class="gt_sourcenotes">
+    <tr>
+      <td class="gt_sourcenote" colspan="6">Significant results with p-value &lt; 0.05</td>
+    </tr>
+  </tfoot>
+  
+</table>
+</div>
+</div>
+<div id="correlation-between-exposurepotential-confounders-and-astalt" class="section level1">
+<h1>Correlation between exposure/potential confounders and AST/ALT</h1>
+<pre class="r"><code>covars &lt;- c(&quot;source&quot;, &quot;age_at_enrollment&quot;,&quot;sex&quot;, 
+            &quot;race_eth_label&quot;, &quot;race_final_label&quot;,&quot;ethnicity&quot;,
+            &quot;rural&quot;, &quot;smoking&quot;,&quot;sq_drink_alcohol&quot;,&quot;sq_average_drink_per_day&quot;,&quot;sq_self_hep_b&quot;,
+            &quot;sq_self_hep_c&quot;,&quot;supp_meds_tylenol&quot;,&quot;supp_meds_steroids&quot;,&quot;sq_water_well&quot;,
+            &quot;sq_water_tap_unfiltered&quot;,&quot;sq_water_house_filtration&quot;, &quot;sq_water_faucet_filter&quot;,
+            &quot;sq_water_charcoal_filter&quot;,&quot;sq_water_bottled&quot;,&quot;sq_water_none&quot;,&quot;sq_water_other_type&quot;)
+
+combined_exp &lt;- c(pfas_name_analysis, covars)
+
+# Function to perform linear model for all potential confounders
+ast_alt_lm &lt;- function(df, exp,out) {
+  result &lt;- tryCatch({
+    model &lt;- lm(as.formula(paste(out, &quot;~&quot;, exp)), data = df)
+    tidy(model)
+  }, error = function(e) {
+    tibble(term = exp, estimate = NA, std.error = NA, statistic = NA, p.value = NA)
+  })
+  result
+}
+
+# Performing the tests and collecting results
+results &lt;- list()
+outcome &lt;- c(&quot;`AST/ALT`&quot;)
+
+for (x_var in combined_exp) {
+  
+    result &lt;- ast_alt_lm(data, x_var,outcome)
+    result &lt;- result %&gt;%
+      filter(term != &quot;(Intercept)&quot;) %&gt;%  # remove intercept term from results
+      mutate(Exposure = x_var)
+    results &lt;- append(results, list(result))
+  
+}
+
+
+# Combine results into a single data frame
+results_df &lt;- bind_rows(results) %&gt;%
+  dplyr::select(everything(), -Exposure)
+
+# Filter for significant results
+#significant_results &lt;- results_df %&gt;%
+ # filter(p.value &lt; 0.05)
+
+#print(significant_results)
+
+# Create a formatted table using gt
+results_df %&gt;%
+  gt() %&gt;%
+  tab_header(
+    title = &quot;Associations between exposures and AST/ALT Ratio From Simple LR&quot;
+  ) %&gt;%
+  cols_label(
+   
+    term = &quot;Variables&quot;,
+    estimate = &quot;Estimate&quot;,
+    std.error = &quot;Standard Error&quot;,
+    statistic = &quot;Statistic&quot;,
+    p.value = &quot;P-value&quot;
+  ) %&gt;%
+  fmt_number(
+    columns = c(estimate, std.error, statistic, p.value),
+    decimals = 3
+  ) %&gt;%
+  tab_source_note(
+    source_note = &quot;Significant results with p-value &lt; 0.05&quot;
+  )</code></pre>
+<div id="ipbneqixzf" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ipbneqixzf table {
+font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+#ipbneqixzf thead, #ipbneqixzf tbody, #ipbneqixzf tfoot, #ipbneqixzf tr, #ipbneqixzf td, #ipbneqixzf th {
+border-style: none;
+}
+#ipbneqixzf p {
+margin: 0;
+padding: 0;
+}
+#ipbneqixzf .gt_table {
+display: table;
+border-collapse: collapse;
+line-height: normal;
+margin-left: auto;
+margin-right: auto;
+color: #333333;
+font-size: 16px;
+font-weight: normal;
+font-style: normal;
+background-color: #FFFFFF;
+width: auto;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #A8A8A8;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #A8A8A8;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+}
+#ipbneqixzf .gt_caption {
+padding-top: 4px;
+padding-bottom: 4px;
+}
+#ipbneqixzf .gt_title {
+color: #333333;
+font-size: 125%;
+font-weight: initial;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-color: #FFFFFF;
+border-bottom-width: 0;
+}
+#ipbneqixzf .gt_subtitle {
+color: #333333;
+font-size: 85%;
+font-weight: initial;
+padding-top: 3px;
+padding-bottom: 5px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-color: #FFFFFF;
+border-top-width: 0;
+}
+#ipbneqixzf .gt_heading {
+background-color: #FFFFFF;
+text-align: center;
+border-bottom-color: #FFFFFF;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#ipbneqixzf .gt_bottom_border {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#ipbneqixzf .gt_col_headings {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#ipbneqixzf .gt_col_heading {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: normal;
+text-transform: inherit;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 6px;
+padding-left: 5px;
+padding-right: 5px;
+overflow-x: hidden;
+}
+#ipbneqixzf .gt_column_spanner_outer {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: normal;
+text-transform: inherit;
+padding-top: 0;
+padding-bottom: 0;
+padding-left: 4px;
+padding-right: 4px;
+}
+#ipbneqixzf .gt_column_spanner_outer:first-child {
+padding-left: 0;
+}
+#ipbneqixzf .gt_column_spanner_outer:last-child {
+padding-right: 0;
+}
+#ipbneqixzf .gt_column_spanner {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 5px;
+overflow-x: hidden;
+display: inline-block;
+width: 100%;
+}
+#ipbneqixzf .gt_spanner_row {
+border-bottom-style: hidden;
+}
+#ipbneqixzf .gt_group_heading {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+text-align: left;
+}
+#ipbneqixzf .gt_empty_group_heading {
+padding: 0.5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: middle;
+}
+#ipbneqixzf .gt_from_md > :first-child {
+margin-top: 0;
+}
+#ipbneqixzf .gt_from_md > :last-child {
+margin-bottom: 0;
+}
+#ipbneqixzf .gt_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+margin: 10px;
+border-top-style: solid;
+border-top-width: 1px;
+border-top-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+overflow-x: hidden;
+}
+#ipbneqixzf .gt_stub {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+}
+#ipbneqixzf .gt_stub_row_group {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+vertical-align: top;
+}
+#ipbneqixzf .gt_row_group_first td {
+border-top-width: 2px;
+}
+#ipbneqixzf .gt_row_group_first th {
+border-top-width: 2px;
+}
+#ipbneqixzf .gt_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#ipbneqixzf .gt_first_summary_row {
+border-top-style: solid;
+border-top-color: #D3D3D3;
+}
+#ipbneqixzf .gt_first_summary_row.thick {
+border-top-width: 2px;
+}
+#ipbneqixzf .gt_last_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#ipbneqixzf .gt_grand_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#ipbneqixzf .gt_first_grand_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-style: double;
+border-top-width: 6px;
+border-top-color: #D3D3D3;
+}
+#ipbneqixzf .gt_last_grand_summary_row_top {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: double;
+border-bottom-width: 6px;
+border-bottom-color: #D3D3D3;
+}
+#ipbneqixzf .gt_striped {
+background-color: rgba(128, 128, 128, 0.05);
+}
+#ipbneqixzf .gt_table_body {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#ipbneqixzf .gt_footnotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#ipbneqixzf .gt_footnote {
+margin: 0px;
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#ipbneqixzf .gt_sourcenotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#ipbneqixzf .gt_sourcenote {
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#ipbneqixzf .gt_left {
+text-align: left;
+}
+#ipbneqixzf .gt_center {
+text-align: center;
+}
+#ipbneqixzf .gt_right {
+text-align: right;
+font-variant-numeric: tabular-nums;
+}
+#ipbneqixzf .gt_font_normal {
+font-weight: normal;
+}
+#ipbneqixzf .gt_font_bold {
+font-weight: bold;
+}
+#ipbneqixzf .gt_font_italic {
+font-style: italic;
+}
+#ipbneqixzf .gt_super {
+font-size: 65%;
+}
+#ipbneqixzf .gt_footnote_marks {
+font-size: 75%;
+vertical-align: 0.4em;
+position: initial;
+}
+#ipbneqixzf .gt_asterisk {
+font-size: 100%;
+vertical-align: 0;
+}
+#ipbneqixzf .gt_indent_1 {
+text-indent: 5px;
+}
+#ipbneqixzf .gt_indent_2 {
+text-indent: 10px;
+}
+#ipbneqixzf .gt_indent_3 {
+text-indent: 15px;
+}
+#ipbneqixzf .gt_indent_4 {
+text-indent: 20px;
+}
+#ipbneqixzf .gt_indent_5 {
+text-indent: 25px;
+}
+#ipbneqixzf .katex-display {
+display: inline-flex !important;
+margin-bottom: 0.75em !important;
+}
+#ipbneqixzf div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+height: 0px !important;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_heading">
+      <td colspan="5" class="gt_heading gt_title gt_font_normal gt_bottom_border" style>Associations between exposures and AST/ALT Ratio From Simple LR</td>
+    </tr>
+    
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="Variables">Variables</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Estimate">Estimate</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Standard Error">Standard Error</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Statistic">Statistic</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="P-value">P-value</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="term" class="gt_row gt_left">pf_do_a</td>
+<td headers="estimate" class="gt_row gt_right">−1.112</td>
+<td headers="std.error" class="gt_row gt_right">2.855</td>
+<td headers="statistic" class="gt_row gt_right">−0.390</td>
+<td headers="p.value" class="gt_row gt_right">0.697</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">pf_hp_a</td>
+<td headers="estimate" class="gt_row gt_right">0.557</td>
+<td headers="std.error" class="gt_row gt_right">1.832</td>
+<td headers="statistic" class="gt_row gt_right">0.304</td>
+<td headers="p.value" class="gt_row gt_right">0.761</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">pf_hp_s</td>
+<td headers="estimate" class="gt_row gt_right">−1.898</td>
+<td headers="std.error" class="gt_row gt_right">0.573</td>
+<td headers="statistic" class="gt_row gt_right">−3.314</td>
+<td headers="p.value" class="gt_row gt_right">0.001</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">pf_hx_a</td>
+<td headers="estimate" class="gt_row gt_right">32.737</td>
+<td headers="std.error" class="gt_row gt_right">9.377</td>
+<td headers="statistic" class="gt_row gt_right">3.491</td>
+<td headers="p.value" class="gt_row gt_right">0.001</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">pf_hx_s</td>
+<td headers="estimate" class="gt_row gt_right">−0.138</td>
+<td headers="std.error" class="gt_row gt_right">0.061</td>
+<td headers="statistic" class="gt_row gt_right">−2.264</td>
+<td headers="p.value" class="gt_row gt_right">0.024</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">pf_pe_a</td>
+<td headers="estimate" class="gt_row gt_right">−0.096</td>
+<td headers="std.error" class="gt_row gt_right">3.570</td>
+<td headers="statistic" class="gt_row gt_right">−0.027</td>
+<td headers="p.value" class="gt_row gt_right">0.979</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">pf_pe_s</td>
+<td headers="estimate" class="gt_row gt_right">−5.312</td>
+<td headers="std.error" class="gt_row gt_right">3.166</td>
+<td headers="statistic" class="gt_row gt_right">−1.678</td>
+<td headers="p.value" class="gt_row gt_right">0.094</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">pf_un_a</td>
+<td headers="estimate" class="gt_row gt_right">−1.029</td>
+<td headers="std.error" class="gt_row gt_right">0.677</td>
+<td headers="statistic" class="gt_row gt_right">−1.520</td>
+<td headers="p.value" class="gt_row gt_right">0.129</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">pfba</td>
+<td headers="estimate" class="gt_row gt_right">−0.601</td>
+<td headers="std.error" class="gt_row gt_right">1.636</td>
+<td headers="statistic" class="gt_row gt_right">−0.368</td>
+<td headers="p.value" class="gt_row gt_right">0.713</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">pfbs</td>
+<td headers="estimate" class="gt_row gt_right">0.000</td>
+<td headers="std.error" class="gt_row gt_right">0.914</td>
+<td headers="statistic" class="gt_row gt_right">0.000</td>
+<td headers="p.value" class="gt_row gt_right">1.000</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">pfda</td>
+<td headers="estimate" class="gt_row gt_right">−0.327</td>
+<td headers="std.error" class="gt_row gt_right">0.301</td>
+<td headers="statistic" class="gt_row gt_right">−1.086</td>
+<td headers="p.value" class="gt_row gt_right">0.278</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">pfna</td>
+<td headers="estimate" class="gt_row gt_right">−0.048</td>
+<td headers="std.error" class="gt_row gt_right">0.184</td>
+<td headers="statistic" class="gt_row gt_right">−0.262</td>
+<td headers="p.value" class="gt_row gt_right">0.794</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sourceEmory</td>
+<td headers="estimate" class="gt_row gt_right">0.503</td>
+<td headers="std.error" class="gt_row gt_right">0.283</td>
+<td headers="statistic" class="gt_row gt_right">1.774</td>
+<td headers="p.value" class="gt_row gt_right">0.077</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sourceNCSU</td>
+<td headers="estimate" class="gt_row gt_right">−0.173</td>
+<td headers="std.error" class="gt_row gt_right">0.239</td>
+<td headers="statistic" class="gt_row gt_right">−0.721</td>
+<td headers="p.value" class="gt_row gt_right">0.471</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sourceUNC</td>
+<td headers="estimate" class="gt_row gt_right">2.167</td>
+<td headers="std.error" class="gt_row gt_right">0.476</td>
+<td headers="statistic" class="gt_row gt_right">4.553</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">age_at_enrollment</td>
+<td headers="estimate" class="gt_row gt_right">−0.001</td>
+<td headers="std.error" class="gt_row gt_right">0.011</td>
+<td headers="statistic" class="gt_row gt_right">−0.117</td>
+<td headers="p.value" class="gt_row gt_right">0.907</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sexMale</td>
+<td headers="estimate" class="gt_row gt_right">−0.369</td>
+<td headers="std.error" class="gt_row gt_right">0.209</td>
+<td headers="statistic" class="gt_row gt_right">−1.772</td>
+<td headers="p.value" class="gt_row gt_right">0.077</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_eth_labelNHB</td>
+<td headers="estimate" class="gt_row gt_right">−0.033</td>
+<td headers="std.error" class="gt_row gt_right">0.504</td>
+<td headers="statistic" class="gt_row gt_right">−0.066</td>
+<td headers="p.value" class="gt_row gt_right">0.947</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_eth_labelNHO</td>
+<td headers="estimate" class="gt_row gt_right">−0.488</td>
+<td headers="std.error" class="gt_row gt_right">0.682</td>
+<td headers="statistic" class="gt_row gt_right">−0.716</td>
+<td headers="p.value" class="gt_row gt_right">0.474</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_eth_labelNHW</td>
+<td headers="estimate" class="gt_row gt_right">−0.227</td>
+<td headers="std.error" class="gt_row gt_right">0.484</td>
+<td headers="statistic" class="gt_row gt_right">−0.468</td>
+<td headers="p.value" class="gt_row gt_right">0.640</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_eth_labelUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.320</td>
+<td headers="std.error" class="gt_row gt_right">0.612</td>
+<td headers="statistic" class="gt_row gt_right">−0.523</td>
+<td headers="p.value" class="gt_row gt_right">0.601</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_final_labelAmerican Indian/Alaskan Native</td>
+<td headers="estimate" class="gt_row gt_right">−1.860</td>
+<td headers="std.error" class="gt_row gt_right">1.693</td>
+<td headers="statistic" class="gt_row gt_right">−1.099</td>
+<td headers="p.value" class="gt_row gt_right">0.273</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_final_labelAsian</td>
+<td headers="estimate" class="gt_row gt_right">−2.071</td>
+<td headers="std.error" class="gt_row gt_right">1.693</td>
+<td headers="statistic" class="gt_row gt_right">−1.223</td>
+<td headers="p.value" class="gt_row gt_right">0.222</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_final_labelAsian/Pacific Islander</td>
+<td headers="estimate" class="gt_row gt_right">−1.180</td>
+<td headers="std.error" class="gt_row gt_right">1.514</td>
+<td headers="statistic" class="gt_row gt_right">−0.779</td>
+<td headers="p.value" class="gt_row gt_right">0.436</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_final_labelBlack</td>
+<td headers="estimate" class="gt_row gt_right">−0.661</td>
+<td headers="std.error" class="gt_row gt_right">1.324</td>
+<td headers="statistic" class="gt_row gt_right">−0.499</td>
+<td headers="p.value" class="gt_row gt_right">0.618</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_final_labelMore than one race</td>
+<td headers="estimate" class="gt_row gt_right">−1.982</td>
+<td headers="std.error" class="gt_row gt_right">2.271</td>
+<td headers="statistic" class="gt_row gt_right">−0.873</td>
+<td headers="p.value" class="gt_row gt_right">0.383</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_final_labelOther</td>
+<td headers="estimate" class="gt_row gt_right">0.325</td>
+<td headers="std.error" class="gt_row gt_right">1.425</td>
+<td headers="statistic" class="gt_row gt_right">0.228</td>
+<td headers="p.value" class="gt_row gt_right">0.820</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_final_labelUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−1.441</td>
+<td headers="std.error" class="gt_row gt_right">1.514</td>
+<td headers="statistic" class="gt_row gt_right">−0.952</td>
+<td headers="p.value" class="gt_row gt_right">0.342</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">race_final_labelWhite</td>
+<td headers="estimate" class="gt_row gt_right">−0.823</td>
+<td headers="std.error" class="gt_row gt_right">1.317</td>
+<td headers="statistic" class="gt_row gt_right">−0.625</td>
+<td headers="p.value" class="gt_row gt_right">0.532</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">ethnicityNot Hispanic</td>
+<td headers="estimate" class="gt_row gt_right">−0.181</td>
+<td headers="std.error" class="gt_row gt_right">0.477</td>
+<td headers="statistic" class="gt_row gt_right">−0.379</td>
+<td headers="p.value" class="gt_row gt_right">0.705</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">ethnicityUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.320</td>
+<td headers="std.error" class="gt_row gt_right">0.611</td>
+<td headers="statistic" class="gt_row gt_right">−0.524</td>
+<td headers="p.value" class="gt_row gt_right">0.601</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">ruralLiving in rural area</td>
+<td headers="estimate" class="gt_row gt_right">−0.380</td>
+<td headers="std.error" class="gt_row gt_right">0.357</td>
+<td headers="statistic" class="gt_row gt_right">−1.065</td>
+<td headers="p.value" class="gt_row gt_right">0.288</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">ruralUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.064</td>
+<td headers="std.error" class="gt_row gt_right">0.318</td>
+<td headers="statistic" class="gt_row gt_right">−0.201</td>
+<td headers="p.value" class="gt_row gt_right">0.841</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">smokingSmoke or use vape</td>
+<td headers="estimate" class="gt_row gt_right">1.525</td>
+<td headers="std.error" class="gt_row gt_right">0.342</td>
+<td headers="statistic" class="gt_row gt_right">4.460</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">smokingUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.049</td>
+<td headers="std.error" class="gt_row gt_right">0.220</td>
+<td headers="statistic" class="gt_row gt_right">−0.222</td>
+<td headers="p.value" class="gt_row gt_right">0.825</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_drink_alcoholNo, never drinker</td>
+<td headers="estimate" class="gt_row gt_right">−0.381</td>
+<td headers="std.error" class="gt_row gt_right">0.306</td>
+<td headers="statistic" class="gt_row gt_right">−1.245</td>
+<td headers="p.value" class="gt_row gt_right">0.214</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_drink_alcoholUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.536</td>
+<td headers="std.error" class="gt_row gt_right">0.289</td>
+<td headers="statistic" class="gt_row gt_right">−1.854</td>
+<td headers="p.value" class="gt_row gt_right">0.065</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_drink_alcoholYes, current drinker</td>
+<td headers="estimate" class="gt_row gt_right">−0.428</td>
+<td headers="std.error" class="gt_row gt_right">0.285</td>
+<td headers="statistic" class="gt_row gt_right">−1.499</td>
+<td headers="p.value" class="gt_row gt_right">0.135</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_average_drink_per_day3-4 alcoholic drinks per day</td>
+<td headers="estimate" class="gt_row gt_right">−0.005</td>
+<td headers="std.error" class="gt_row gt_right">0.878</td>
+<td headers="statistic" class="gt_row gt_right">−0.005</td>
+<td headers="p.value" class="gt_row gt_right">0.996</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_average_drink_per_dayLess than 1 alcoholic drink per day</td>
+<td headers="estimate" class="gt_row gt_right">0.097</td>
+<td headers="std.error" class="gt_row gt_right">0.486</td>
+<td headers="statistic" class="gt_row gt_right">0.200</td>
+<td headers="p.value" class="gt_row gt_right">0.841</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_average_drink_per_dayUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">0.170</td>
+<td headers="std.error" class="gt_row gt_right">0.455</td>
+<td headers="statistic" class="gt_row gt_right">0.373</td>
+<td headers="p.value" class="gt_row gt_right">0.709</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_self_hep_bUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.144</td>
+<td headers="std.error" class="gt_row gt_right">0.219</td>
+<td headers="statistic" class="gt_row gt_right">−0.661</td>
+<td headers="p.value" class="gt_row gt_right">0.509</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_self_hep_bYes</td>
+<td headers="estimate" class="gt_row gt_right">0.780</td>
+<td headers="std.error" class="gt_row gt_right">0.466</td>
+<td headers="statistic" class="gt_row gt_right">1.675</td>
+<td headers="p.value" class="gt_row gt_right">0.095</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_self_hep_cUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.116</td>
+<td headers="std.error" class="gt_row gt_right">0.214</td>
+<td headers="statistic" class="gt_row gt_right">−0.541</td>
+<td headers="p.value" class="gt_row gt_right">0.589</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_self_hep_cYes</td>
+<td headers="estimate" class="gt_row gt_right">1.926</td>
+<td headers="std.error" class="gt_row gt_right">0.455</td>
+<td headers="statistic" class="gt_row gt_right">4.228</td>
+<td headers="p.value" class="gt_row gt_right">0.000</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">supp_meds_tylenolUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.678</td>
+<td headers="std.error" class="gt_row gt_right">0.765</td>
+<td headers="statistic" class="gt_row gt_right">−0.886</td>
+<td headers="p.value" class="gt_row gt_right">0.376</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">supp_meds_tylenolYes</td>
+<td headers="estimate" class="gt_row gt_right">−1.185</td>
+<td headers="std.error" class="gt_row gt_right">1.314</td>
+<td headers="statistic" class="gt_row gt_right">−0.902</td>
+<td headers="p.value" class="gt_row gt_right">0.368</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">supp_meds_steroidsUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.515</td>
+<td headers="std.error" class="gt_row gt_right">0.710</td>
+<td headers="statistic" class="gt_row gt_right">−0.725</td>
+<td headers="p.value" class="gt_row gt_right">0.469</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">supp_meds_steroidsYes</td>
+<td headers="estimate" class="gt_row gt_right">−1.669</td>
+<td headers="std.error" class="gt_row gt_right">1.987</td>
+<td headers="statistic" class="gt_row gt_right">−0.840</td>
+<td headers="p.value" class="gt_row gt_right">0.402</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_wellUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.191</td>
+<td headers="std.error" class="gt_row gt_right">0.217</td>
+<td headers="statistic" class="gt_row gt_right">−0.879</td>
+<td headers="p.value" class="gt_row gt_right">0.380</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_wellYes</td>
+<td headers="estimate" class="gt_row gt_right">0.030</td>
+<td headers="std.error" class="gt_row gt_right">0.298</td>
+<td headers="statistic" class="gt_row gt_right">0.102</td>
+<td headers="p.value" class="gt_row gt_right">0.919</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_tap_unfilteredUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.575</td>
+<td headers="std.error" class="gt_row gt_right">0.273</td>
+<td headers="statistic" class="gt_row gt_right">−2.106</td>
+<td headers="p.value" class="gt_row gt_right">0.036</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_tap_unfilteredYes</td>
+<td headers="estimate" class="gt_row gt_right">−0.336</td>
+<td headers="std.error" class="gt_row gt_right">0.258</td>
+<td headers="statistic" class="gt_row gt_right">−1.301</td>
+<td headers="p.value" class="gt_row gt_right">0.194</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_house_filtrationUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.162</td>
+<td headers="std.error" class="gt_row gt_right">0.210</td>
+<td headers="statistic" class="gt_row gt_right">−0.771</td>
+<td headers="p.value" class="gt_row gt_right">0.441</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_house_filtrationYes</td>
+<td headers="estimate" class="gt_row gt_right">0.376</td>
+<td headers="std.error" class="gt_row gt_right">0.356</td>
+<td headers="statistic" class="gt_row gt_right">1.056</td>
+<td headers="p.value" class="gt_row gt_right">0.291</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_faucet_filterUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.333</td>
+<td headers="std.error" class="gt_row gt_right">0.234</td>
+<td headers="statistic" class="gt_row gt_right">−1.427</td>
+<td headers="p.value" class="gt_row gt_right">0.155</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_faucet_filterYes</td>
+<td headers="estimate" class="gt_row gt_right">−0.339</td>
+<td headers="std.error" class="gt_row gt_right">0.252</td>
+<td headers="statistic" class="gt_row gt_right">−1.345</td>
+<td headers="p.value" class="gt_row gt_right">0.179</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_charcoal_filterUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.196</td>
+<td headers="std.error" class="gt_row gt_right">0.216</td>
+<td headers="statistic" class="gt_row gt_right">−0.908</td>
+<td headers="p.value" class="gt_row gt_right">0.364</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_charcoal_filterYes</td>
+<td headers="estimate" class="gt_row gt_right">−0.262</td>
+<td headers="std.error" class="gt_row gt_right">0.300</td>
+<td headers="statistic" class="gt_row gt_right">−0.871</td>
+<td headers="p.value" class="gt_row gt_right">0.384</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_bottledUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.154</td>
+<td headers="std.error" class="gt_row gt_right">0.271</td>
+<td headers="statistic" class="gt_row gt_right">−0.566</td>
+<td headers="p.value" class="gt_row gt_right">0.572</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_bottledYes</td>
+<td headers="estimate" class="gt_row gt_right">0.390</td>
+<td headers="std.error" class="gt_row gt_right">0.261</td>
+<td headers="statistic" class="gt_row gt_right">1.491</td>
+<td headers="p.value" class="gt_row gt_right">0.137</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_noneUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.171</td>
+<td headers="std.error" class="gt_row gt_right">0.206</td>
+<td headers="statistic" class="gt_row gt_right">−0.829</td>
+<td headers="p.value" class="gt_row gt_right">0.408</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_noneYes</td>
+<td headers="estimate" class="gt_row gt_right">−0.272</td>
+<td headers="std.error" class="gt_row gt_right">0.498</td>
+<td headers="statistic" class="gt_row gt_right">−0.546</td>
+<td headers="p.value" class="gt_row gt_right">0.585</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_other_typeUnknown/Not Reported</td>
+<td headers="estimate" class="gt_row gt_right">−0.131</td>
+<td headers="std.error" class="gt_row gt_right">0.210</td>
+<td headers="statistic" class="gt_row gt_right">−0.624</td>
+<td headers="p.value" class="gt_row gt_right">0.533</td></tr>
+    <tr><td headers="term" class="gt_row gt_left">sq_water_other_typeYes</td>
+<td headers="estimate" class="gt_row gt_right">−0.443</td>
+<td headers="std.error" class="gt_row gt_right">0.382</td>
+<td headers="statistic" class="gt_row gt_right">−1.159</td>
+<td headers="p.value" class="gt_row gt_right">0.247</td></tr>
+  </tbody>
+  <tfoot class="gt_sourcenotes">
+    <tr>
+      <td class="gt_sourcenote" colspan="5">Significant results with p-value &lt; 0.05</td>
+    </tr>
+  </tfoot>
+  
 </table>
 </div>
 </div>
