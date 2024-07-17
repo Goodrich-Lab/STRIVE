@@ -24,38 +24,11 @@ source(fs::path(here::here("!load_cleaned_data.R")))
 
 
 ```{r data summary,warning=FALSE}
-data <- readxl::read_xlsx(fs::path(
-  dir_data,
-  "STRIVE_PFAS_demo_28jun24.xlsx")) %>% 
-  janitor::clean_names()%>%
-  mutate(sex = ifelse(sex == 1, "Male", "Female"),
-         rural = ifelse(rural == 1, "Living in rural area", "Living in Metro area"),
-         smoking = ifelse(smoking == 1, "Smoke or use vape", "Don't smoke or use vape"),
-         case_control = ifelse(case_control == 1, "With cirrhosis", "Healthy"),
-         ## added by BS
-         ethnicity = ifelse(ethnicity == 1, "Hispanic", "Not Hispanic"),
-         sq_drink_alcohol = case_when(
-           sq_drink_alcohol == 1 ~ "Yes, current drinker",
-           sq_drink_alcohol == 2 ~ "No, former drinker (stopped)",
-           sq_drink_alcohol == 3 ~ "No, never drinker",
-           TRUE ~ "Unknown/Not Reported"), 
-         sq_average_drink_per_day = case_when(
-             sq_average_drink_per_day == 1 ~ "Less than 1 alcoholic drink per day",
-             sq_average_drink_per_day == 2 ~ "1-2 alcoholic drinks per day",
-             sq_average_drink_per_day == 3 ~ "3-4 alcoholic drinks per day",
-             sq_average_drink_per_day == 4 ~ "More than 4 alcoholic drinks per day",
-             TRUE ~ "Unknown/Not Reported"
-           )
-         ## to here 
-         
-         )%>%
-  mutate(rural = ifelse(is.na(rural), "Unknown/Not Reported", rural),
-         smoking = ifelse(is.na(smoking), "Unknown/Not Reported", smoking))%>%
-  ## added or edited by BS
-  mutate(race_eth_label = ifelse(is.na(race_eth_label), "Unknown/Not Reported", race_eth_label),
-         race_final_label = ifelse(is.na(race_final_label), "Unknown/Not Reported", race_final_label),
-         sq_average_drink_per_day = ifelse(is.na(sq_average_drink_per_day), "Unknown/Not Reported", sq_average_drink_per_day))
-
+#data1 <- data %>% drop_na(case_control) %>% dyplr::select(-strive_id,-contains("scld")) %>%
+ # mutate_at(.vars = covars[-2],
+  #          .funs = ~ as.character(.))
+# 
+# table1::table1(~.|case_control, data1)
 ```
 
 # Check percentage of NA for each PFAS
@@ -78,7 +51,6 @@ print(pfas_na, n=25)
 #                              "percent of na for PFAS.xlsx"))
 
 pfas_name_analysis <- pfas_na$name[1:12] # by the cutoff of 25% of missing
-
 ```
 
 # Descriptive stats of PFAS in overall paricipants
@@ -102,16 +74,23 @@ data_pfas<- data %>% dplyr::select(pfas_name_analysis, case_control)
   ) %>% 
   ungroup())
 
-# writexl::write_xlsx(pfas_stats,
-#                     fs::path(dir_result,
-#                              "descriptive_stats_pfas.xlsx"))
+#writexl::write_xlsx(pfas_stats,
+ #                   fs::path(dir_result,
+     #                        "descriptive_stats_pfas.xlsx"))
 ```
 
 # Descriptive stats split by outcome
 ```{r stats,warning=FALSE, cache=FALSE}
+covars <- c("source", "age_at_enrollment","sex", 
+            "race_eth_label", "race_final_label","ethnicity",
+            "rural", "smoking","sq_drink_alcohol","sq_average_drink_per_day","sq_self_hep_b",
+            "sq_self_hep_c","supp_meds_tylenol","supp_meds_steroids","sq_water_well",
+            "sq_water_tap_unfiltered","sq_water_house_filtration", "sq_water_faucet_filter",
+            "sq_water_charcoal_filter","sq_water_bottled","sq_water_none","sq_water_other_type")
+
 (data %>% dplyr::select(pfas_name_analysis, covars,race_final_label,
                   ethnicity,contains("sq_"),contains("alt"), 
-                  contains("ast"), contains("trig"),
+                  contains("ast"), contains("trig"),cirrhosis,
                   case_control) %>%
   tbl_summary(by = case_control,
               type = all_continuous() ~ "continuous2",
@@ -122,5 +101,143 @@ data_pfas<- data %>% dplyr::select(pfas_name_analysis, case_control)
   add_p(pvalue_fun = ~ style_pvalue(.x, digits = 2)) %>%
   add_overall() %>%
   add_n())
+```
+
+# Correlation between PFAS and potential confounders
+```{r}
+covars <- c("source", "age_at_enrollment","sex", 
+            "race_eth_label", "race_final_label","ethnicity",
+            "rural", "smoking","sq_drink_alcohol","sq_average_drink_per_day","sq_self_hep_b",
+            "sq_self_hep_c","supp_meds_tylenol","supp_meds_steroids","sq_water_well",
+            "sq_water_tap_unfiltered","sq_water_house_filtration", "sq_water_faucet_filter",
+            "sq_water_charcoal_filter","sq_water_bottled","sq_water_none","sq_water_other_type")
+
+# Function to perform linear model for all potential confounders
+test_lm <- function(df, pfas, covar) {
+  result <- tryCatch({
+    model <- lm(as.formula(paste(pfas, "~", covar)), data = df)
+    tidy(model)
+  }, error = function(e) {
+    tibble(term = covar, estimate = NA, std.error = NA, statistic = NA, p.value = NA)
+  })
+  result
+}
+
+# Performing the tests and collecting results
+results <- list()
+
+for (pfas in pfas_name_analysis) {
+  for (covar in covars) {
+    result <- test_lm(data, pfas, covar)
+    result <- result %>%
+      filter(term != "(Intercept)") %>%  # remove intercept term from results
+      mutate(pfas = pfas, covariate = covar)
+    results <- append(results, list(result))
+  }
+}
+
+# Combine results into a single data frame
+results_df <- bind_rows(results) %>%
+  dplyr::select(pfas, term, everything(), -covariate)
+
+# Filter for significant results
+significant_results <- results_df %>%
+  filter(p.value < 0.05)
+
+print(significant_results)
+
+# Create a formatted table using gt
+significant_results %>%
+  gt() %>%
+  tab_header(
+    title = "Significant Associations between PFAS and potential confounders From Simple LR"
+  ) %>%
+  cols_label(
+    pfas = "PFAS",
+    term = "Covariate",
+    estimate = "Estimate",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P-value"
+  ) %>%
+  fmt_number(
+    columns = c(estimate, std.error, statistic, p.value),
+    decimals = 3
+  ) %>%
+  tab_source_note(
+    source_note = "Significant results with p-value < 0.05"
+  )
+
+```
+
+# Correlation between exposure/potential confounders and AST/ALT
+```{r}
+covars <- c("source", "age_at_enrollment","sex", 
+            "race_eth_label", "race_final_label","ethnicity",
+            "rural", "smoking","sq_drink_alcohol","sq_average_drink_per_day","sq_self_hep_b",
+            "sq_self_hep_c","supp_meds_tylenol","supp_meds_steroids","sq_water_well",
+            "sq_water_tap_unfiltered","sq_water_house_filtration", "sq_water_faucet_filter",
+            "sq_water_charcoal_filter","sq_water_bottled","sq_water_none","sq_water_other_type")
+
+combined_exp <- c(pfas_name_analysis, covars)
+
+# Function to perform linear model for all potential confounders
+ast_alt_lm <- function(df, exp,out) {
+  result <- tryCatch({
+    model <- lm(as.formula(paste(out, "~", exp)), data = df)
+    tidy(model)
+  }, error = function(e) {
+    tibble(term = exp, estimate = NA, std.error = NA, statistic = NA, p.value = NA)
+  })
+  result
+}
+
+# Performing the tests and collecting results
+results <- list()
+outcome <- c("`AST/ALT`")
+
+for (x_var in combined_exp) {
+  
+    result <- ast_alt_lm(data, x_var,outcome)
+    result <- result %>%
+      filter(term != "(Intercept)") %>%  # remove intercept term from results
+      mutate(Exposure = x_var)
+    results <- append(results, list(result))
+  
+}
+
+
+# Combine results into a single data frame
+results_df <- bind_rows(results) %>%
+  dplyr::select(everything(), -Exposure)
+
+# Filter for significant results
+#significant_results <- results_df %>%
+ # filter(p.value < 0.05)
+
+#print(significant_results)
+
+# Create a formatted table using gt
+results_df %>%
+  gt() %>%
+  tab_header(
+    title = "Associations between exposures and AST/ALT Ratio From Simple LR"
+  ) %>%
+  cols_label(
+   
+    term = "Variables",
+    estimate = "Estimate",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P-value"
+  ) %>%
+  fmt_number(
+    columns = c(estimate, std.error, statistic, p.value),
+    decimals = 3
+  ) %>%
+  tab_source_note(
+    source_note = "Significant results with p-value < 0.05"
+  )
+
 ```
 

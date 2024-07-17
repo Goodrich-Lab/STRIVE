@@ -1,5 +1,6 @@
 # Load libraries
 library(janitor)
+#library(corrplot)
 library(tidyverse)
 library(dplyr)
 library(Hmisc)
@@ -35,4 +36,5 @@ library(clusterGeneration)
 library(BWQS)
 library(gWQS)
 library(cowplot)
+library(gt)
 

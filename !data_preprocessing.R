@@ -65,11 +65,6 @@ emerging <- c("pfbs", "pf_pe_a","pf_pe_s", "pfba", "pf_hx_a")
 emerging_cat <- c("pfbs_median", "pf_pe_a_median","pf_pe_s_median", "pfba_detected", "pf_hx_a_detected")
 
 
-## added or edited by BS
-covars <- c("source", "age_at_enrollment","sex", 
-            "rural", "smoking","race_final_label", "sq_average_drink_per_day")
-
-
 # Imputation of PFAS: min(pfas concentration)/sqrt(2)
 data_imputed <- data %>%
   mutate_at(.vars = pfas_name_analysis,
