@@ -87,8 +87,16 @@ emerging_scld <- paste0(emerging, "_", "scld")
 # Adding new cirrhosis outcome defined by AST/ALT (Cirrhosis: AST/ALT ratio > 1; Health: AST/ALT ratio <= 1)
 data_scaled1 <- data_scaled %>%
   mutate(`AST/ALT` = ast_u_l/alt_u_l,
-         cirrhosis = ifelse(`AST/ALT` > 1, "With cirrhosis", "Healthy"))
-
+         cirrhosis = ifelse(`AST/ALT` > 1, "With cirrhosis", "Healthy"))%>%
+  mutate(alt_cat1 = ifelse((alt_u_l <= 29 & sex == "Male")|
+                                (alt_u_l <= 19 & sex == "Female"), "Norm", "High"),
+         alt_cat2 = ifelse((alt_u_l <= 33 & sex == "Male")|
+                             (alt_u_l <= 25 & sex == "Female"), "Norm", "High"),
+         ast_cat1 = ifelse((ast_u_l <= 29 & sex == "Male")|
+                             (ast_u_l <= 19 & sex == "Female"), "Norm", "High"),
+         ast_cat2 = ifelse((ast_u_l <= 33 & sex == "Male")|
+                             (ast_u_l <= 25 & sex == "Female"), "Norm", "High"))
+# 
 write_csv(data_scaled1, fs::path(dir_data, "cleaned_data/STRIVE_cleaned_data.csv"))
 
 rm(data)
