@@ -50,7 +50,6 @@ print(pfas_na, n=25)
 #                     fs::path(dir_result,
 #                              "percent of na for PFAS.xlsx"))
 
-pfas_name_analysis <- pfas_na$name[1:12] # by the cutoff of 25% of missing
 ```
 
 # Descriptive stats of PFAS in overall paricipants
