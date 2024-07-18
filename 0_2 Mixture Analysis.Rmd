@@ -177,7 +177,7 @@ res_legacy <- res_legacy_cont %>%
 # Perform OWAS analysis using qgcomp on emerging PFAS
 res_emerging_cont <- data.frame()
 
-for(q in 6:10){
+for(q in 6){
   res_temp <- epiomics::owas_qgcomp(data_scaled_analysis,
                                        expnms = emerging_scld,
                                        omics = c("AST/ALT","alt_u_l","ast_u_l"),
