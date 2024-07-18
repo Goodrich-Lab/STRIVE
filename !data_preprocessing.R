@@ -6,13 +6,12 @@ source(fs::path(here::here("!directories.R")))
 # Read Data ---------------------------------------------------------------
 data <- readxl::read_xlsx(fs::path(
   dir_data,
-  "STRIVE_PFAS_demo_08july24.xlsx")) %>% 
+  "STRIVE_PFAS_demo_16Jul24.xlsx")) %>% 
   janitor::clean_names()%>%
   mutate(sex = ifelse(sex == 1, "Male", "Female"),
          rural = ifelse(rural == 1, "Living in rural area", "Living in Metro area"),
          smoking = ifelse(smoking == 1, "Smoke or use vape", "Don't smoke or use vape"),
-         case_control = ifelse(case_control == 1, "With cirrhosis", "Healthy"),
-         ## added by BS
+         case_control = ifelse(case_control == 1, "Cirrhosis", "Healthy"),
          ethnicity = ifelse(ethnicity == 1, "Hispanic", "Not Hispanic"),
          sq_drink_alcohol = case_when(
            sq_drink_alcohol == 1 ~ "Yes, current drinker",
@@ -26,7 +25,7 @@ data <- readxl::read_xlsx(fs::path(
              sq_average_drink_per_day == 4 ~ "More than 4 alcoholic drinks per day",
              TRUE ~ "Unknown/Not Reported"
            )
-         ## to here
+         
          )%>%
   mutate_at(.vars = c("sq_self_hep_b","sq_self_hep_c","supp_meds_tylenol",
                       "supp_meds_steroids","sq_water_well","sq_water_tap_unfiltered",
@@ -40,11 +39,11 @@ data <- readxl::read_xlsx(fs::path(
                       "sq_water_charcoal_filter","sq_water_bottled",
                       "sq_water_none","sq_water_other_type","sq_water_dont_know"),
             .funs = ~ifelse(is.na(.), "Unknown/Not Reported", .))%>%
-  ## added or edited by BS
+  
   mutate(race_eth_label = ifelse(is.na(race_eth_label), "Unknown/Not Reported", race_eth_label),
          race_final_label = ifelse(is.na(race_final_label), "Unknown/Not Reported", race_final_label),
          sq_average_drink_per_day = ifelse(is.na(sq_average_drink_per_day), "Unknown/Not Reported", sq_average_drink_per_day))
-## to here
+
 pfas_name <- colnames(data)[3:27]
 
 # For the analysis, only focusing on the PFAS with <25% below LOD
@@ -87,15 +86,16 @@ emerging_scld <- paste0(emerging, "_", "scld")
 # Adding new cirrhosis outcome defined by AST/ALT (Cirrhosis: AST/ALT ratio > 1; Health: AST/ALT ratio <= 1)
 data_scaled1 <- data_scaled %>%
   mutate(`AST/ALT` = ast_u_l/alt_u_l,
-         cirrhosis = ifelse(`AST/ALT` > 1, "With cirrhosis", "Healthy"))%>%
+         log_ast_alt = log(`AST/ALT`),
+         cirrhosis = ifelse(`AST/ALT` > 1, "Cirrhosis", "Healthy"))%>%
   mutate(alt_cat1 = ifelse((alt_u_l <= 29 & sex == "Male")|
-                                (alt_u_l <= 19 & sex == "Female"), "Norm", "High"),
+                                (alt_u_l <= 19 & sex == "Female"), "Normal", "Abnormal"),
          alt_cat2 = ifelse((alt_u_l <= 33 & sex == "Male")|
-                             (alt_u_l <= 25 & sex == "Female"), "Norm", "High"),
+                             (alt_u_l <= 25 & sex == "Female"), "Normal", "Abnormal"),
          ast_cat1 = ifelse((ast_u_l <= 29 & sex == "Male")|
-                             (ast_u_l <= 19 & sex == "Female"), "Norm", "High"),
+                             (ast_u_l <= 19 & sex == "Female"), "Normal", "Abnormal"),
          ast_cat2 = ifelse((ast_u_l <= 33 & sex == "Male")|
-                             (ast_u_l <= 25 & sex == "Female"), "Norm", "High"))
+                             (ast_u_l <= 25 & sex == "Female"), "Normal", "Abnormal"))
 # 
 write_csv(data_scaled1, fs::path(dir_data, "cleaned_data/STRIVE_cleaned_data.csv"))
 

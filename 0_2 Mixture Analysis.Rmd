@@ -22,119 +22,24 @@ source(fs::path(here::here("!directories.R")))
 source(fs::path(here::here("!load_cleaned_data.R")))
 ```
 
-## Mixture Analysis-qgcomp(continuous PFAS)
-```{r qgcomp}
-set.seed(1234)
-
-data_scaled_analysis <- data %>% 
-  mutate(case_control = ifelse(case_control =="Healthy", 0, 1))%>%
-  drop_na(case_control, all_of(covars))
-
-res_legacy <- epiomics::owas_qgcomp(data_scaled_analysis,
-                             expnms = legacy_scld,
-                             omics = "case_control",
-                             covars = covars,
-                             family = "binomial",
-                             q = 3) %>%
-  mutate(odds_ratio = exp(psi),
-         exp_ci_low = exp(lcl_psi),
-         exp_ci_high = exp(ucl_psi))%>%
-  mutate(type = "legacy_pfas") %>% dplyr::select(type, everything())%>%
-  mutate(parameter = "q = 10")%>%
-  mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
-  dplyr::select(parameter,type,odds_ci, everything()) 
-
-# res_legacy <- res_legacy3 %>% bind_rows(res_legacy4) %>% bind_rows(res_legacy5) %>%
-#   bind_rows(res_legacy6) %>% bind_rows(res_legacy7)%>% bind_rows(res_legacy8)%>% mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high, n.digits = 3)) %>%
-#   select(parameter,type,odds_ci, everything()) 
-
-res_emerging<- epiomics::owas_qgcomp(data_scaled_analysis,
-                             expnms = emerging_scld,
-                             omics = "case_control",
-                             covars = covars,
-                             family = "binomial",
-                             q = 3
-                          ) %>%
-  mutate(odds_ratio = exp(psi),
-         exp_ci_low = exp(lcl_psi),
-         exp_ci_high = exp(ucl_psi))%>%
-  mutate(type = "emerging_pfas") %>% dplyr::select(type, everything()) %>%
-  mutate(parameter = "q = 3")%>%
-  mutate(odds_ci = jag2::effest_ci(odds_ratio, exp_ci_low, exp_ci_high,n.digits = 3)) %>%
-  dplyr::select(parameter,type,odds_ci, everything()) 
-
-# qgcomp_output <- qgcomp.noboot(as.formula(paste("case_control~",
-#                                                 str_c(emerging_scld, collapse = "+") ,
-#                                                 "+",
-#                                                 str_c(covars, collapse = "+"))), # Covariates - same as MLR model
-#                                expnms=emerging_scld, # Name of Mixtures
-#                                data=data_scaled_analysis,
-#                                family=binomial(), # family=binomial() for logistic
-#                                q = 3)
-# 
-# plot(qgcomp_output)
-
-# res_emerging <- res_emerging4 %>% bind_rows(res_emerging5) %>%
-#   bind_rows(res_emerging6) %>% bind_rows(res_emerging7)%>%
-#   bind_rows(res_emerging8)
-
-res_qgcomp <- res_legacy %>% bind_rows(res_emerging)
-
-
-# bar plot
-(panel_a <- ggplot(
-  data = res_qgcomp,
-  aes(y = exp(psi), x = type)
-) +
-  geom_point(shape = 20, size = 2, 
-             position = position_dodge(width = 1)) +
-  geom_errorbar(aes(
-    ymin = exp(lcl_psi),
-    ymax = exp(ucl_psi)),
-    width = 0.2, alpha= 0.7, linewidth = 0.5) +
-  geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
-  # scale_x_discrete(limits=rev) +
-  # scale_y_continuous(trans = "log2") +
-  ggtitle("Overall Mixture Effect on case status using qgcomp") +
-  # xlab("Overall\nmixture effect") +
-  ylab("Odds ratio") +
-  coord_flip()+
-  theme_classic() +
-  theme(
-    # axis.text.y = element_blank()
-    text = element_text(size = 9),
-    panel.background = element_rect(fill= "white"),
-    # axis.text.x = element_text(angle = 90),
-    axis.title.y = element_blank(),
-    plot.title = element_text(size = 15, hjust = 0.5)
-  ))
-
-ggsave(
-  plot = panel_a,
-  fs::path(dir_figures,
-    "Mixture_effect_qgcomp.png"
-  ),
-  width = 3.5, height = 2, dpi = 500
-)
-```
-
-## Mixture analysis using all AST,ALT endpoints
+## Mixture analysis
 ```{r ast alt outcomes}
 # Set seed for reproducibility
 set.seed(1234)
-
+con_end <-c("log_alt", "log_ast")
+con_end1 <-c("alt_cat1", "alt_cat2", "ast_cat1", "ast_cat2")
 # Prepare the data
 data_scaled_analysis <- data %>% 
-  drop_na("AST/ALT", all_of(covars)) %>%
-  mutate_at(.vars = c("alt_cat1", "ast_cat1", "alt_cat2", "ast_cat2"),
-            .funs = ~ifelse(. == "Norm", 0, 1))
+  drop_na(all_of(con_end), all_of(covars)) %>%
+  mutate_at(.vars = con_end1,
+            .funs = ~ifelse(. == "Normal", 0, 1))
 
 # Perform OWAS analysis using qgcomp on legacy PFAS
 res_legacy_cont <- data.frame()
-for(q in 3:5){
+for(q in 3:6){
   res_temp <- epiomics::owas_qgcomp(data_scaled_analysis,
                                      expnms = legacy_scld,
-                                     omics = c("AST/ALT", "alt_u_l", "ast_u_l"),
+                                     omics = con_end,
                                      covars = covars,
                                      family = "gaussian",  # Gaussian for linear regression
                                      q = q)%>%
@@ -144,10 +49,10 @@ for(q in 3:5){
 }
 
 res_legacy_cat <- data.frame()
-for(q in 3:5){
+for(q in 3:6){
   res_temp <- epiomics::owas_qgcomp(data_scaled_analysis,
                                      expnms = legacy_scld,
-                                     omics = c("alt_cat1", "ast_cat1", "alt_cat2", "ast_cat2"),
+                                     omics = con_end1,
                                      covars = covars,
                                      family = "binomial", 
                                      q = q)%>%
@@ -171,18 +76,17 @@ res_legacy <- res_legacy_cont %>%
   mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~
                            "Sig.(FDR < 0.05)",
                           p_value < 0.05 ~ "Sig.(p value < 0.05)", 
-                         p_value >= 0.05 ~ "Not Sig."))%>%
-  mutate(feature = ifelse(feature == "AST.ALT", "AST/ALT ratio", feature))
+                         p_value >= 0.05 ~ "Not Sig."))
 
 # Perform OWAS analysis using qgcomp on emerging PFAS
 res_emerging_cont <- data.frame()
 
-for(q in 6:10){
+for(q in 6){
   res_temp <- epiomics::owas_qgcomp(data_scaled_analysis,
                                        expnms = emerging_scld,
-                                       omics = c("AST/ALT","alt_u_l","ast_u_l"),
+                                       omics = con_end,
                                        covars = covars,
-                                       family = "gaussian",  # Gaussian for linear regression
+                                       family = "gaussian",  
                                        q = q) %>%
     mutate(parameter = paste0("q = ", q)) %>%
     dplyr::select(parameter, everything())
@@ -194,7 +98,7 @@ res_emerging_cat <- data.frame()
 for(q in 3:6){
   res_temp <- epiomics::owas_qgcomp(data_scaled_analysis,
                                        expnms = emerging_scld,
-                                       omics = c("alt_cat1", "ast_cat1", "alt_cat2", "ast_cat2"),
+                                       omics = con_end1,
                                        covars = covars,
                                        family = "binomial", 
                                        q = q) %>%
@@ -217,8 +121,7 @@ res_emerging <- res_emerging_cont %>%
   mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~
                            "Sig.(FDR < 0.05)",
                           p_value < 0.05 ~ "Sig.(p value < 0.05)", 
-                         p_value >= 0.05 ~ "Not Sig."))%>%
-  mutate(feature = ifelse(feature == "AST.ALT", "AST/ALT ratio", feature))
+                         p_value >= 0.05 ~ "Not Sig."))
 
 # Bind results for bar plot
 res <- res_legacy %>% 
@@ -228,21 +131,41 @@ res <- res_legacy %>%
 
 writexl::write_xlsx(res, fs::path(dir_result,
                                   "mixture_analysis_alt_ast_outcomes.xlsx"))
+
+# Transform coefficients and confidence intervals to OR for categorical results
+transform_to_or <- function(df) {
+  df %>%
+    mutate(
+      coef = exp(coef),
+      ci_low = exp(ci_low),
+      ci_high = exp(ci_high)
+    )
+}
+
 # Plotting function
-plot_pfas <- function(res, title) {
+plot_pfas <- function(res, title, is_categorical = FALSE) {
+  if (is_categorical) {
+    res <- transform_to_or(res)
+    x_label <- "Odds Ratio (95% CI)"
+  } else {
+    x_label <- "Coefficient (95% CI)"
+  }
+  
+res$feature<-factor(res$feature, levels=c("log_alt", "log_ast", "alt_cat1", "alt_cat2", "ast_cat1", "ast_cat2"), labels=c("natural log alt", "natural log ast", "lowest cut alt", "highest cut alt", "lowest cut ast", "highest cut ast"))
+
   ggplot(res, aes(x = coef, y = fct_reorder(feature, coef), color = sig)) +
     geom_errorbar(aes(xmin = ci_low, xmax = ci_high), width = 0, position = position_dodge(width = 1)) +
     geom_point(size = 1, position = position_dodge(width = 1)) + 
-    geom_vline(xintercept = 0, linetype = 2, color = "grey") + 
+    geom_vline(xintercept = if (is_categorical) 1 else 0, linetype = 2, color = "grey") + 
     facet_grid(~parameter, scales = "free_x") + 
     labs(
       title = title,
-      x = "Coefficient (95% CI)", 
-      y= "PFAS"
+      x = x_label, 
+      y = "PFAS"
     ) +
     theme(
       legend.position = "bottom",
-      panel.background = element_rect(fill="white"), 
+      panel.background = element_rect(fill = "white"), 
       strip.background = element_rect(fill = "white"),
       strip.text.y = element_text(angle = 0, hjust = 0),
       text = element_text(size = 15),
@@ -255,44 +178,171 @@ plot_pfas <- function(res, title) {
 }
 
 # Plot results for legacy PFAS
-(plot_legacy_cat <- plot_pfas(res_legacy %>% filter(outcome_type == "categorical"), "Effect of Legacy PFAS on outcomes"))
-
-(plot_legacy_cont <- plot_pfas(res_legacy %>% filter(outcome_type == "continuous"), "Effect of Legacy PFAS on outcomes"))
+plot_legacy_cat <- plot_pfas(res_legacy %>% filter(outcome_type == "categorical"), "Effect of Legacy PFAS on outcomes", TRUE)
+plot_legacy_cont <- plot_pfas(res_legacy %>% filter(outcome_type == "continuous"), "Effect of Legacy PFAS on outcomes")
 
 # Plot results for emerging PFAS
-(plot_emerging_cat <- plot_pfas(res_emerging %>% filter(outcome_type == "categorical"), "Effect of Emerging PFAS on outcomes"))
+plot_emerging_cat <- plot_pfas(res_emerging %>% filter(outcome_type == "categorical"), "Effect of Emerging PFAS on outcomes", TRUE)
+plot_emerging_cont <- plot_pfas(res_emerging %>% filter(outcome_type == "continuous"), "Effect of Emerging PFAS on outcomes")
 
-(plot_emerging_cont <- plot_pfas(res_emerging %>% filter(outcome_type == "continuous"), "Effect of Emerging PFAS on outcomes"))
-
-
-# # Bar plot
-# (panel_a <- ggplot(
-#   data = res,
-#   aes(y = coef, x = type)
-# ) +
-#   geom_point(shape = 20, size = 2, position = position_dodge(width = 1)) +
-#   geom_errorbar(aes(
-#     ymin = ci_low,
-#     ymax = ci_high),
-#     width = 0.2, alpha = 0.7, linewidth = 0.5) +
-#   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
-#   ggtitle("Overall Mixture Effect on outcome using qgcomp") +
-#   ylab("Coefficient (95% CI)") +
-#   coord_flip() +
-#   theme_classic() +
-#   theme(
-#     text = element_text(size = 9),
-#     panel.background = element_rect(fill= "white"),
-#     axis.title.y = element_blank(),
-#     plot.title = element_text(size = 15, hjust = 0.5)
-#   ))
-# 
-# ggsave(
-#   plot = panel_a,
-#   filename = fs::path(dir_figures, "Mixture_effect_qgcomp.png"),
-#   width = 3.5, height = 2, dpi = 500
-# )
+# Print plots
+print(plot_legacy_cont)
+print(plot_emerging_cont)
+print(plot_legacy_cat)
+print(plot_emerging_cat)
 
 ```
 
 
+# Tables: adjusted association of PFAS mixture with outcomes
+```{r mixture analysis}
+res <- readxl::read_xlsx(fs::path(dir_result,
+                                  "mixture_analysis_alt_ast_outcomes.xlsx"))
+
+res %>%
+  filter(feature == "log_alt") %>%
+  dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and ALT From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+  ) 
+
+res %>%
+  filter(feature == "log_ast") %>%
+   dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and AST From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+  ) 
+
+##
+res %>%
+  filter(feature == "alt_cat1") %>%
+  mutate(
+    OR = exp(psi),
+    lower_CI = exp(lcl_psi),
+    upper_CI = exp(ucl_psi),
+    coef_ci = paste0(round(OR, 3), " (", round(lower_CI, 3), "-", round(upper_CI, 3), ")")
+  )%>%
+  dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval) %>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and ALT (defined by 29 in males and 19 in females) From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value"
+  ) %>%
+  fmt_number(
+    columns = vars(test_statistic, p_value, adjusted_pval),
+    decimals = 3
+  )
+
+
+res %>%
+  filter(feature == "ast_cat1") %>%
+  mutate(
+    OR = exp(psi),
+    lower_CI = exp(lcl_psi),
+    upper_CI = exp(ucl_psi),
+    coef_ci = paste0(round(OR, 3), " (", round(lower_CI, 3), "-", round(upper_CI, 3), ")")
+  ) %>%
+  dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval) %>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and AST (defined by 29 in males and 19 in females) From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value"
+  ) %>%
+  fmt_number(
+    columns = vars(test_statistic, p_value, adjusted_pval),
+    decimals = 3
+  )
+
+res %>%
+  filter(feature == "alt_cat2") %>%
+  mutate(
+
+    OR = exp(psi),
+    lower_CI = exp(lcl_psi),
+    upper_CI = exp(ucl_psi),
+    coef_ci = paste0(round(OR, 3), " (", round(lower_CI, 3), "-", round(upper_CI, 3), ")")
+  ) %>%
+  dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval) %>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and ALT (defined by 33 in males and 25 in females) From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value"
+  ) %>%
+  fmt_number(
+    columns = vars(test_statistic, p_value, adjusted_pval),
+    decimals = 3
+  )
+
+res %>%
+  filter(feature == "ast_cat2") %>%
+  mutate(
+
+    OR = exp(psi),
+    lower_CI = exp(lcl_psi),
+    upper_CI = exp(ucl_psi),
+    coef_ci = paste0(round(OR, 3), " (", round(lower_CI, 3), "-", round(upper_CI, 3), ")")
+  ) %>%
+  dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval) %>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and AST (defined by 33 in males and 25 in females) From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value"
+  ) %>%
+  fmt_number(
+    columns = vars(test_statistic, p_value, adjusted_pval),
+    decimals = 3
+  )
+
+```
