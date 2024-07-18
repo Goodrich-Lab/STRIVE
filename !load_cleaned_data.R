@@ -34,9 +34,8 @@ emerging_cat <- c("pfbs_median", "pf_pe_a_median","pf_pe_s_median", "pfba_detect
 #             "sq_water_tap_unfiltered","sq_water_house_filtration", "sq_water_faucet_filter",
 #             "sq_water_charcoal_filter","sq_water_bottled","sq_water_none","sq_water_other_type")
 
-# covars_analysis <- covars[1:4]
 
-
+covars <- c("source", "age_at_enrollment", "sex", "race_final_label", "rural", "smoking", "sq_drink_alcohol")
 pfas_name_scld <- paste0(pfas_name_analysis,"_", "scld")
 legacy_scld <- paste0(legacy,"_", "scld")
 emerging_scld <- paste0(emerging, "_", "scld")

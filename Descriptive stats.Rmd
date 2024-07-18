@@ -240,3 +240,234 @@ results_df %>%
 
 ```
 
+
+# Association of PFAS and ALT and AST related outcomes
+
+```{r association of PFAS and outcome}
+res <- readxl::read_xlsx(fs::path(dir_result,"pfas_alt_ast.xlsx"))%>%
+  dplyr::select(var_name, plot_name, group, estimate:sig) %>%
+  mutate(across(where(is.numeric), ~ round(., 3)))
+
+res %>%
+  filter(var_name == "alt_u_l") %>%
+  dplyr::select(plot_name, estimate, se, test_statistic, 
+                p_value, adjusted_pval,conf_low, conf_high)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between exposures and ALT From Simple LR"
+  ) %>%
+  cols_label(
+    plot_name = "PFAS",
+    estimate = "Estimate",
+    se = "Standard Error",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+    conf_low = "Lower CI",
+    conf_high = "Upper CI"
+  ) 
+
+res %>%
+  filter(var_name == "ast_u_l") %>%
+  dplyr::select(plot_name, estimate, se, test_statistic, 
+                p_value, adjusted_pval,conf_low, conf_high)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between exposures and AST From Simple LR"
+  ) %>%
+  cols_label(
+    plot_name = "PFAS",
+    estimate = "Estimate",
+    se = "Standard Error",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+    conf_low = "Lower CI",
+    conf_high = "Upper CI"
+  ) 
+
+res %>%
+  filter(var_name == "alt_cat1") %>%
+  dplyr::select(plot_name, estimate, se, test_statistic, 
+                p_value, adjusted_pval,conf_low, conf_high)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between exposures and ALT(defined by 29 in males and 19 in females) From Logistic Regression"
+  ) %>%
+  cols_label(
+    plot_name = "PFAS",
+    estimate = "Estimate",
+    se = "Standard Error",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+    conf_low = "Lower CI",
+    conf_high = "Upper CI"
+  )
+
+res %>%
+  filter(var_name == "ast_cat1") %>%
+  dplyr::select(plot_name, estimate, se, test_statistic, 
+                p_value, adjusted_pval,conf_low, conf_high)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between exposures and AST(defined by 29 in males and 19 in females) From Logistic Regression"
+  ) %>%
+  cols_label(
+    plot_name = "PFAS",
+    estimate = "Estimate",
+    se = "Standard Error",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+    conf_low = "Lower CI",
+    conf_high = "Upper CI"
+  ) 
+
+res %>%
+  filter(var_name == "alt_cat2") %>%
+  dplyr::select(plot_name, estimate, se, test_statistic, 
+                p_value, adjusted_pval,conf_low, conf_high)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between exposures and ALT(defined by 33 in males and 25 in females) From Logistic Regression"
+  ) %>%
+  cols_label(
+    plot_name = "PFAS",
+    estimate = "Estimate",
+    se = "Standard Error",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+    conf_low = "Lower CI",
+    conf_high = "Upper CI"
+  ) 
+
+res %>%
+  filter(var_name == "ast_cat2") %>%
+  dplyr::select(plot_name, estimate, se, test_statistic, 
+                p_value, adjusted_pval,conf_low, conf_high)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between exposures and AST(defined by 33 in males and 25 in females) From Logistic Regression"
+  ) %>%
+  cols_label(
+    plot_name = "PFAS",
+    estimate = "Estimate",
+    se = "Standard Error",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+    conf_low = "Lower CI",
+    conf_high = "Upper CI"
+  ) 
+```
+
+# Association of PFAS mixture with ALT and AST related outcomes
+```{r mixture analysis}
+res <- readxl::read_xlsx(fs::path(dir_result,
+                                  "mixture_analysis_alt_ast_outcomes.xlsx"))
+
+res %>%
+  filter(feature == "alt_u_l") %>%
+  dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and ALT From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+  ) 
+
+res %>%
+  filter(feature == "ast_u_l") %>%
+   dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and AST From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+  ) 
+
+res %>%
+  filter(feature == "alt_cat1") %>%
+ dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and ALT(defined by 29 in males and 19 in females) From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+  ) 
+
+res %>%
+  filter(feature == "ast_cat1") %>%
+ dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and AST(defined by 29 in males and 19 in females) From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+  ) 
+
+res %>%
+  filter(feature == "alt_cat2") %>%
+ dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and ALT(defined by 33 in males and 25 in females) From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+  ) 
+
+res %>%
+  filter(feature == "ast_cat2") %>%
+  dplyr::select(parameter, type, coef_ci, test_statistic, 
+                p_value, adjusted_pval)%>%
+  gt() %>%
+  tab_header(
+    title = "Associations between PFAS mixture and AST(defined by 33 in males and 25 in females) From qgcomp"
+  ) %>%
+  cols_label(
+    parameter = "Parameter",
+    type = "PFAS mixture",
+    coef_ci = "Effect Estimate (95% CI)",
+    test_statistic = "Statistic",
+    p_value = "P-value",
+    adjusted_pval = "Adjusted P-value",
+  ) 
+```
+
