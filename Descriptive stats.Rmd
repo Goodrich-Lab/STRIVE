@@ -46,13 +46,23 @@ pfas_na <- data_pfas %>%
 
 print(pfas_na, n=25) #n=25
 
-correlation_matrix <- data_pfas %>%
+# Adding normalized PFAS
+data_pfas_scd <- data_pfas %>% 
+  mutate_at(.vars = names(data_pfas),
+            .funs = list(scld = ~scale(.)%>% as.vector(.))) %>% dplyr::select(contains("scld"))
+
+correlation_matrix <- data_pfas_scd %>%
   select_if(~sum(!is.na(.)) > 0) %>%  # Ensure there is at least some non-missing data
   cor(use = "pairwise.complete.obs")
 
 print(correlation_matrix)
 
 correlation_long <- melt(correlation_matrix)
+
+correlation_long <- correlation_long %>%
+  mutate(keep = as.numeric(Var1) >= as.numeric(Var2)) %>%
+  filter(keep) %>%
+  dplyr::select(-keep)
 
 heatmap_plot <- ggplot(data = correlation_long, aes(Var1, Var2, fill = value)) +
   geom_tile() +
@@ -68,14 +78,18 @@ heatmap_plot <- ggplot(data = correlation_long, aes(Var1, Var2, fill = value)) +
 print(heatmap_plot)
 
 ##scaled 14 PFAS
-data_pfas1<- data %>% dplyr::select(contains("scld"))
+data_pfas1 <- data %>% dplyr::select(contains("scld"))
 
 correlation_matrix1 <- data_pfas1 %>%
-  select_if(~sum(!is.na(.)) > 0) %>%  
+  select_if(~sum(!is.na(.)) > 0) %>%
   cor(use = "pairwise.complete.obs")
 
-print(correlation_matrix1)
 correlation_long1 <- melt(correlation_matrix1)
+
+correlation_long1 <- correlation_long1 %>%
+  mutate(keep = as.numeric(Var1) >= as.numeric(Var2)) %>%
+  filter(keep) %>%
+  dplyr::select(-keep)
 
 heatmap_plot1 <- ggplot(data = correlation_long1, aes(Var1, Var2, fill = value)) +
   geom_tile() +
@@ -87,6 +101,7 @@ heatmap_plot1 <- ggplot(data = correlation_long1, aes(Var1, Var2, fill = value))
                                    size = 8, hjust = 1)) +
   coord_fixed() +
   labs(x = "PFAS", y = "PFAS", title = "Correlation Heatmap of Scaled PFAS Variables")
+
 print(heatmap_plot1)
 
 ```
@@ -112,9 +127,6 @@ data_pfas<- data %>% dplyr::select(pfas_name_analysis)
   ) %>% 
   ungroup())
 
-#writexl::write_xlsx(pfas_stats,
- #                   fs::path(dir_result,
-     #                        "descriptive_stats_pfas.xlsx"))
 ```
 
 # Process of selecting outcome variables
@@ -208,7 +220,6 @@ legend("topright",
        lwd = 3, 
        cex = 0.8, 
        bty = "n")
-
 
 #2. AST
 num_na_ast <- sum(is.na(data$ast_u_l))
@@ -428,7 +439,6 @@ for(i in 1:p$nrow) {# Customize color scales manually
   }
 }
 print(p)
-
 
 # 5. correlation between natural ln ast, ln alt, and ln ast/alt ratio by categorical endpoints
 
@@ -743,8 +753,6 @@ plot6 <-ggcorrplot(correlation_matrix,
         )
 
 print(plot6)
-
-
 
 # 7-1-2. after excluding NCSU data
 data_renamed <- data_ex_ncsu[, c('ast_cat1', 'ast_cat2', 'alt_cat1','alt_cat2', 'cirrhosis','case_control')]
@@ -1538,10 +1546,6 @@ ggplot(results_long, aes(x = Value, y = Metric, color = Comparison, shape = Comp
         legend.position = "right") +
   scale_shape_manual(values = 1:length(unique(results_long$Comparison))) +
   scale_color_manual(values = palette_colors)
-
-
-
-
 ```
 
 # Correlation heat map btw PFAS and potential confounders
@@ -1750,19 +1754,23 @@ colnames(result_df_filtered) <- ifelse(colnames(result_df_filtered) %in% names(n
 
 rownames(result_df_filtered) <- ifelse(rownames(result_df_filtered) %in% names(new_row_names), new_row_names[rownames(result_df_filtered)], rownames(result_df_filtered))
 
+custom_colors <- colorRampPalette(c("blue", "white", "red"))(100)
 
-custom_colors <- colorRampPalette(brewer.pal(11, "RdYlBu"))(100)
+data_min <- min(result_df_filtered)
+data_max <- max(result_df_filtered)
+
+breaks <- sort(unique(c(seq(min(result_df_filtered), 0 - 1e-5, length.out = 50), 0, seq(0 + 1e-5, max(result_df_filtered), length.out = 51))))
 
 pheatmap(result_df_filtered, 
          cluster_rows = TRUE, 
          cluster_cols = TRUE, 
          color = custom_colors,  # Use custom color palette
+         breaks = breaks,  # Set breaks to include the midpoint
          display_numbers = FALSE,  # Hide values on the heatmap
          main = "Initial Heatmap of Coefficients",
          fontsize_row = 5,  # Adjust row label font size
          fontsize_col = 8   # Adjust column label font size
 )
-
 
 ## Examine potential outliers
 filtered_results <- all_results %>%
@@ -1795,35 +1803,47 @@ print(outliers_df) #did not exclude these
 first_set_pfas <- c("PFHxS", "PFUnA", "PFHpA", "PFHpS", "PFDoA", "PFDA", "PFNA", "PFOS", "PFOA")
 second_set_pfas <- setdiff(colnames(result_df_filtered), first_set_pfas)
 
-# Split the data into two dataframes
+# Split the data into two data frames
 first_set_df <- result_df_filtered[, first_set_pfas, drop = FALSE]
 second_set_df <- result_df_filtered[, second_set_pfas, drop = FALSE]
 
-custom_colors <- colorRampPalette(brewer.pal(11, "RdYlBu"))(100)
-
 # Generate heatmap for the first set of PFAS
+custom_colors <- colorRampPalette(c("blue", "white", "red"))(100)
+
+data_min <- min(first_set_df)
+data_max <- max(first_set_df)
+
+breaks <- sort(unique(c(seq(min(first_set_df), 0 - 1e-5, length.out = 50), 0, seq(0 + 1e-5, max(first_set_df), length.out = 51))))
+
 pheatmap(first_set_df, 
          cluster_rows = TRUE, 
          cluster_cols = TRUE, 
-         color = custom_colors,  # Use custom color palette from RColorBrewer
-         display_numbers = FALSE,  # Hide values on the heatmap
+         color = custom_colors, 
+         breaks=breaks,
+         display_numbers = FALSE,  
          main = "Heatmap of Coefficients of Legacy PFAS",
-         fontsize_row = 5,  # Adjust row label font size
-         fontsize_col = 8   # Adjust column label font size
+         fontsize_row = 5,  
+         fontsize_col = 8 
 )
 
-
 # Generate heatmap for the second set of PFAS
+custom_colors <- colorRampPalette(c("blue", "white", "red"))(100)
+
+data_min <- min(second_set_df)
+data_max <- max(second_set_df)
+
+breaks <- sort(unique(c(seq(min(second_set_df), 0 - 1e-5, length.out = 50), 0, seq(0 + 1e-5, max(second_set_df), length.out = 51))))
+
 pheatmap(second_set_df, 
          cluster_rows = TRUE, 
          cluster_cols = TRUE, 
-         color = custom_colors,  # Use custom color palette from RColorBrewer
-         display_numbers = FALSE,  # Hide values on the heatmap
+         color = custom_colors,
+         breaks=breaks,
+         display_numbers = FALSE,  
          main = "Heatmap of Coefficients of Emerging PFAS",
-         fontsize_row = 5,  # Adjust row label font size
-         fontsize_col = 8   # Adjust column label font size
+         fontsize_row = 5,  
+         fontsize_col = 8   
 )
-
 
 ```
 
@@ -1853,6 +1873,9 @@ continuous_results <- bind_rows(lapply(pfas_name_scld, function(pfas) {
 print(continuous_results)
 
 cate_conf <- setdiff(potential_conf, conti_conf)
+
+#excluding source for releveling
+cate_conf <-setdiff(cate_conf, "source")
 
 data <- data %>%
   mutate(across(all_of(cate_conf), as.factor))
@@ -1888,11 +1911,51 @@ categorical_results <- bind_rows(lapply(pfas_name_scld, function(pfas) {
 
 print(categorical_results)
 
+###
+# for source
+generate_covariate_name <- function(base_name, level) {
+  return(paste0(base_name, "_", gsub(" ", "_", level)))
+}
+
+fit_all_models <- function(pfas_types, base_covariate, data) {
+  all_results <- list()
+  
+  # Ensure base_covariate is an unordered factor
+  data[[base_covariate]] <- as.factor(data[[base_covariate]])
+  levels_source <- levels(data[[base_covariate]])
+  all_levels <- levels_source  
+  
+  for (pfas in pfas_types) {
+    for (level in all_levels) {
+      
+      covariate_name <- generate_covariate_name(base_covariate, level)
+      
+      # Relevel the factor
+      data[[covariate_name]] <- relevel(data[[base_covariate]], ref = level)
+      
+      model_results <- fit_model_cat(pfas, covariate_name, data)
+      model_results$Reference_Level <- level
+      model_results$Covariate_Name <- covariate_name
+      all_results[[paste(pfas, level, sep = "_")]] <- model_results
+    }
+  }
+  
+  final_results_df <- do.call(rbind, all_results)
+  final_results_df <- final_results_df[, !(names(final_results_df) %in% c("Reference_Level","Covariate_Name"))]
+  return(final_results_df)
+}
+
+source_results <- fit_all_models(pfas_name_scld, "source", data)
+
+print(source_results)
+
+categorical_results <- rbind(categorical_results, source_results)
+###
 all_results <- rbind(continuous_results, categorical_results)
 
 adjust_pvalues <- function(df) {
   df %>%
-    mutate(Adjusted_P = p.adjust(P, method = "bonferroni"))
+    mutate(Adjusted_P = p.adjust(P, method = "fdr"))
 }
 
 all_results_adjusted <- all_results %>%
@@ -1904,7 +1967,6 @@ all_results_adjusted <- all_results_adjusted %>%
   mutate(significance = ifelse(Adjusted_P < 0.05, "*", ""))
 
 all_results_adjusted <- all_results_adjusted %>%
-  
   arrange(PFAS) %>%
   dplyr::select(PFAS, Confounders, Factor, Coeff, SE, P, Adjusted_P, R2, significance)
 
@@ -1960,7 +2022,7 @@ old_par <- par(cex = 0.7)
 display.brewer.all()
 par(old_par)
 
-custom_colors <- colorRampPalette(brewer.pal(3, "RdYlBu"))(100)
+custom_colors <- colorRampPalette(brewer.pal(3, "YlOrRd"))(100)
 
 new_names <- c(
   "pf_hx_s_scld" = "PFHxS",
@@ -2022,13 +2084,12 @@ pheatmap(result_df,
          fontsize_col = 8   # Adjust column label font size
 )
 
-
-grid.text("R squared", x = 0.93, y = 0.87, gp = gpar(fontsize = 10))
-grid.text("*adjusted P<0.05", x = 0.92, y = 0.20, gp = gpar(fontsize = 6, fontface = "italic"))
+grid.text("R squared", x = 0.96, y = 0.89, gp = gpar(fontsize = 10))
+grid.text("*adjusted P<0.05", x = 0.97, y = 0.51, gp = gpar(fontsize = 6, fontface = "italic"))
 
 #####
 # Forest plot for the correlation coefficient (SE)
-sig_var <- c('age_at_enrollment', 'bmi','source','sq_average_drink_per_day','smoking','sq_water_bottled')
+sig_var <- c('age_at_enrollment','sq_drink_alcohol','sq_average_drink_per_day', 'sex','bmi','smoking','sq_water_bottled','sq_water_other_type', 'sq_water_faucet_filter','source_UNC','source_DUKE','source_Emory','source_NCSU')
 
 for_p <- all_results_adjusted[all_results_adjusted$Confounders %in% sig_var,]
 
@@ -2083,14 +2144,31 @@ color_palette <- colorRampPalette(brewer.pal(3, "Set3"))(10)
 
 new_sig_factor <- c(
   "sq_water_bottledYes" = "Water bottled, Yes vs No",
+  "sq_water_other_typeYes" ="Water other type, Yes vs No",
+  "sq_water_faucet_filterYes" = "Water faucet filtered, Yes vs No",
+  "sq_drink_alcoholYes, current drinker" = "Current drinker vs Nondrinker",
+  "sq_drink_alcoholNo, former drinker (stopped)" = "Past drinker vs Nondrinker",
   "sq_average_drink_per_day3-4 alcoholic drinks per day" = "3-4/day vs <1/day alcholic drinks",
-   "sq_average_drink_per_day1-2 alcoholic drinks per day" = "1-2/day vs <1/day alcholic drinks",
+  "sq_average_drink_per_day1-2 alcoholic drinks per day" = "1-2/day vs <1/day alcholic drinks",
   "sourceUNC" = "UNC vs Emory",
   "sourceNCSU" = "NCSU vs Emory",
   "sourceDUKE" = "Duke vs Emory",
   "smokingSmoke or use vape" = "Smoker vs Nonsmoker",
+  "sexMale" = "Male vs Female",
   "bmi" = "BMI",
-  "age_at_enrollment" = "Age"
+  "age_at_enrollment" = "Age",
+  "source_UNCNCSU" = "NCSU vs UNC",
+  "source_UNCEmory" = "Emory vs UNC",
+  "source_UNCDUKE" ="Duke vs UNC",
+  "source_NCSUUNC" ="UNC vs NCSU",
+  "source_NCSUEmory" = "Emory vs NCSU",
+  "source_NCSUDUKE" ="Duke vs NCSU",
+  "source_EmoryUNC" = "UNC vs Emory",
+  "source_EmoryNCSU" = "NCSU vs Emory",
+  "source_EmoryDUKE" = "Duke vs Emory",
+  "source_DUKEUNC" = "UNC vs Duke",
+  "source_DUKENCSU" ="NCSU vs Duke",
+  "source_DUKEEmory" = "Emory vs Duke"
 )
 
 combined_mean <- combined_mean %>%
@@ -2104,6 +2182,35 @@ forest_plot <- ggplot(combined_mean, aes(x = Average_Coeff, y = Factor, color = 
   scale_color_gradientn(colors = custom_colors) +
   labs(
     x = "Beta coefficient",
+    y = "Confounders",
+    color = "Coefficient",
+    title = "Average Coefficients of Confounders by PFAS Group"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.y = element_text(size = 10),
+    axis.title = element_text(size = 12)
+  ) +
+  facet_wrap(~ PFAS_Group, scales = "free_x", nrow = 1)
+
+print(forest_plot)
+
+###
+data_min <- min(second_set_df)
+data_max <- max(second_set_df)
+
+forest_plot <- ggplot(combined_mean, aes(x = Average_Coeff, y = Factor, color = Average_Coeff)) +
+  geom_point(size = 0.9) +
+  geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
+  scale_color_gradient2(low = "blue", high = "red", mid = "grey", 
+                       midpoint = 0, 
+                       limit = c(min(combined_mean$Average_Coeff), max(combined_mean$Average_Coeff)), 
+                       space = "Lab", 
+                       name="Coefficient") +
+
+  labs(
+    x = "Coefficient",
     y = "Confounders",
     color = "Coefficient",
     title = "Average Coefficients of Confounders by PFAS Group"
@@ -2146,25 +2253,112 @@ for_p_filtered <- for_p_filtered %>%
   mutate(PFAS = recode(PFAS, !!!new_names)) %>%
   mutate(Factor = recode(Factor, !!!new_sig_factor))
 
-forest_plot <- ggplot(for_p_filtered, aes(x = Coeff, y = Factor, color = Coeff)) +
-  geom_point(size = 3) +
+demo <-for_p_filtered %>% filter(Confounders %in% c('age_at_enrollment','bmi','sex'))
+alcohol_smoke <-for_p_filtered %>% filter(Confounders %in% c('smoking','sq_drink_alcohol','sq_average_drink_per_day'))
+water <-for_p_filtered %>% filter(Confounders %in% c("sq_water_faucet_filter","sq_water_bottled", "sq_water_other_type"))
+site <- for_p_filtered %>% filter(Confounders %in% c("source_Emory","source_DUKE","source_NCSU","source_UNC"))
+
+demo$PFAS <- factor(demo$PFAS, levels = unique(demo$PFAS))
+
+forest_plot <- ggplot(demo, aes(x = Coeff, y = PFAS, color = Coeff)) +
+  geom_point(size = 1) +
   geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
-  scale_color_gradientn(colors = custom_colors) +
+  scale_color_gradient2(low = "blue", high = "red", mid = "grey", 
+                       midpoint = 0, 
+                       limit = c(min(for_p_filtered$Coeff), max(for_p_filtered$Coeff)), 
+                       space = "Lab", 
+                       name = "Coefficient") +
   labs(
-    x = "Beta coefficient",
-    y = "Confounders",
+    x = "Coefficient",
+    y = "PFAS",
     color = "Coefficient",
-    title = "Coefficients of Confounders by individual PFAS"
+    title = "Coefficients of demographic factors by individual PFAS"
   ) +
   theme_minimal() +
   theme(
     legend.position = "bottom",
     axis.text.y = element_text(size = 10),
-    axis.title = element_text(size = 12)
+    axis.title = element_text(size = 12),
+    plot.title = element_text(hjust = 0.5)
   ) +
-  facet_wrap(~ PFAS, scales = "free_x", nrow = 1)
+  facet_grid(PFAS_Group ~ Factor, scales = "free_y", space = "free_y", drop = TRUE)
 
 print(forest_plot)
+
+forest_plot1 <- ggplot(alcohol_smoke, aes(x = Coeff, y = PFAS, color = Coeff)) +
+  geom_point(size = 1) +
+  geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
+  scale_color_gradient2(low = "blue", high = "red", mid = "grey", 
+                       midpoint = 0, 
+                       limit = c(min(for_p_filtered$Coeff), max(for_p_filtered$Coeff)), 
+                       space = "Lab", 
+                       name = "Coefficient") +
+  labs(
+    x = "Coefficient",
+    y = "PFAS",
+    color = "Coefficient",
+    title = "Coefficients of alcohol drinking and smoking factors by individual PFAS"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.y = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  facet_grid(PFAS_Group ~ Factor, scales = "free_y", space = "free_y", drop = TRUE)
+
+print(forest_plot1)
+
+forest_plot2 <- ggplot(water, aes(x = Coeff, y = PFAS, color = Coeff)) +
+  geom_point(size = 1) +
+  geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
+  scale_color_gradient2(low = "blue", high = "red", mid = "grey", 
+                       midpoint = 0, 
+                       limit = c(min(for_p_filtered$Coeff), max(for_p_filtered$Coeff)), 
+                       space = "Lab", 
+                       name = "Coefficient") +
+  labs(
+    x = "Coefficient",
+    y = "PFAS",
+    color = "Coefficient",
+    title = "Coefficients of water factors by individual PFAS"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.y = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  facet_grid(PFAS_Group ~ Factor, scales = "free_y", space = "free_y", drop = TRUE)
+
+print(forest_plot2)
+
+forest_plot3 <- ggplot(site, aes(x = Coeff, y = PFAS, color = Coeff)) +
+  geom_point(size = 1) +
+  geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
+  scale_color_gradient2(low = "blue", high = "red", mid = "grey", 
+                       midpoint = 0, 
+                       limit = c(min(for_p_filtered$Coeff), max(for_p_filtered$Coeff)), 
+                       space = "Lab", 
+                       name = "Coefficient") +
+  labs(
+    x = "Coefficient",
+    y = "PFAS",
+    color = "Coefficient",
+    title = "Coefficients of all possible comparison between sites by individual PFAS"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.y = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  facet_grid(PFAS_Group ~ Factor, scales = "free_y", space = "free_y", drop = TRUE)
+
+print(forest_plot3)
 
 ```
 
@@ -2192,13 +2386,18 @@ extract_model_summary <- function(end, covariate, data) {
   estimate <- coef(summary_model)[2, 1]
   se <- coef(summary_model)[2, 2]
   p_value <- coef(summary_model)[2, 4]
-  r_squared <- NA  # R-squared is not directly applicable to logistic regression models
+  r_squared <-1 - summary_model$deviance / summary_model$null.deviance
   return(data.frame(Confounders = covariate, Coeff = estimate, SE = se, P = p_value, Factor = covariate, Endpoint = end, R2 = r_squared))
 }
 
 con_end1 <- c('alt_cat1','alt_cat2', 'ast_cat1','ast_cat2')
 data_temp <- data %>%
   mutate(across(all_of(con_end1), ~ ifelse(. == "Normal", 0, 1)))
+
+data_temp$source <- relevel(data_temp$source, ref = "Emory")
+data_temp$race_final_label <- relevel(data_temp$race_final_label, ref = "White")
+data_temp$sq_drink_alcohol <- relevel(data_temp$sq_drink_alcohol, ref = "No, never drinker")
+data_temp$sq_average_drink_per_day <- relevel(data_temp$sq_average_drink_per_day, ref = "Less than 1 alcoholic drink per day")
 
 continuous_results1 <- bind_rows(lapply(con_end1, function(end) {
   bind_rows(lapply(conti_conf, function(cov) extract_model_summary(end, cov, data_temp)))
@@ -2233,6 +2432,8 @@ fit_model_cat <- function(end, covariate, data) {
   return(results)
 }
 
+cate_conf <- c(cate_conf, 'source')
+
 categorical_results <- bind_rows(lapply(con_end, function(end) {
   bind_rows(lapply(cate_conf, function(cov) fit_model_cat(end, cov, data)))
 }))
@@ -2247,7 +2448,7 @@ fit_model_cat <- function(end, covariate, data) {
   }
   
   pseudo_r_squared <- 1 - summary_model$deviance / summary_model$null.deviance
-  coefficients_df <- coefficients_df[-1, ]  # Exclude intercept
+  coefficients_df <- coefficients_df[-1, ] 
 
   results <- data.frame()
 
@@ -2256,7 +2457,7 @@ fit_model_cat <- function(end, covariate, data) {
       Confounders = covariate, 
       Coeff = coefficients_df[i, "Estimate"], 
       SE = coefficients_df[i, "Std. Error"],
-      P = coefficients_df[i, "Pr(>|z|)"],  # For logistic regression
+      P = coefficients_df[i, "Pr(>|z|)"],  
       Factor = rownames(coefficients_df)[i],
       Endpoint = end,
       R2 = pseudo_r_squared
@@ -2279,7 +2480,7 @@ all_results <- rbind(continuous_results, categorical_results)
 
 adjust_pvalues <- function(df) {
   df %>%
-    mutate(Adjusted_P = p.adjust(P, method = "bonferroni"))
+    mutate(Adjusted_P = p.adjust(P, method = "fdr"))
 }
 
 all_results_adjusted <- all_results %>%
@@ -2314,7 +2515,7 @@ print(fancy_table)
 
 doc <- read_docx()
 doc <- body_add_flextable(doc, value = fancy_table)
-print(doc, target = "Beta coefficient between potential confounders and categorical ast or alt adding adjP and R2.docx")
+print(doc, target = "Coefficients between potential confounders and categorical ast or alt adding adjP and R2.docx")
 
 # 1. Extract unique factors and PFAS
 unique_conf <- unique(all_results_adjusted$Confounders)
@@ -2385,7 +2586,9 @@ colnames(result_df) <- ifelse(colnames(result_df) %in% names(new_names), new_nam
 
 rownames(result_df) <- ifelse(rownames(result_df) %in% names(new_row_names), new_row_names[rownames(result_df)], rownames(result_df))
 
-# Generate heatmap with adjusted font size
+#color
+custom_colors <- colorRampPalette(brewer.pal(3, "YlOrRd"))(100)
+
 pheatmap(result_df, 
          cluster_rows = TRUE, 
          cluster_cols = TRUE, 
@@ -2398,8 +2601,8 @@ pheatmap(result_df,
 )
 
 
-grid.text("R squared", x = 0.93, y = 0.87, gp = gpar(fontsize = 10))
-grid.text("*adjusted P<0.05", x = 0.92, y = 0.18, gp = gpar(fontsize = 6, fontface = "italic"))
+grid.text("R squared", x = 0.95, y = 0.87, gp = gpar(fontsize = 10))
+grid.text("*adjusted P<0.05", x = 0.96, y = 0.50, gp = gpar(fontsize = 6, fontface = "italic"))
 
 #####
 # Forest plot for the correlation coefficient (SE)
@@ -2443,9 +2646,13 @@ new_for_p_cont <- new_for_p_cont %>%
   )
 
 forest_plot <- ggplot(new_for_p_cont, aes(x = Coeff, y = Factor, color = Coeff)) +
-  geom_point(size = 3) +
+  geom_point(size = 1) +
   geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
-  scale_color_gradientn(colors = color_palette) +
+   scale_color_gradient2(low = "blue", high = "red", mid = "grey", 
+                       midpoint = 0, 
+                       limit = c(min(new_for_p_cont$Coeff), max(new_for_p_cont$Coeff)), 
+                       space = "Lab", 
+                       name = "Coefficient") +
   labs(
     x = "Coefficients",
     y = "Confounders",
@@ -2456,7 +2663,8 @@ forest_plot <- ggplot(new_for_p_cont, aes(x = Coeff, y = Factor, color = Coeff))
   theme(
     legend.position = "bottom",
     axis.text.y = element_text(size = 10),
-    axis.title = element_text(size = 12)
+    axis.title = element_text(size = 12),
+    plot.title = element_text(hjust = 0.5)
   ) +
   facet_wrap(~ Endpoint, scales = "free_x", nrow = 1)
 
@@ -2473,9 +2681,13 @@ new_for_p_cat <- new_for_p_cat %>%
   )
 
 forest_plot <- ggplot(new_for_p_cat, aes(x = OR, y = Factor, color = OR)) +
-  geom_point(size = 3) +
+  geom_point(size = 1) +
   geom_errorbarh(aes(xmin = OR_CI_Lower, xmax = OR_CI_Upper), height = 0.2) +
-  scale_color_gradientn(colors = color_palette) +
+    scale_color_gradient2(low = "blue", high = "red", mid = "grey", 
+                       midpoint = 1, 
+                       limit = c(min(new_for_p_cat$OR), max(new_for_p_cat$OR)), 
+                       space = "Lab", 
+                       name = "OR") +
   labs(
     x = "Odds Ratios",
     y = "Confounders",
@@ -2486,7 +2698,8 @@ forest_plot <- ggplot(new_for_p_cat, aes(x = OR, y = Factor, color = OR)) +
   theme(
     legend.position = "bottom",
     axis.text.y = element_text(size = 10),
-    axis.title = element_text(size = 12)
+    axis.title = element_text(size = 12),
+    plot.title = element_text(hjust = 0.5)
   ) +
   facet_wrap(~ Endpoint, scales = "free_x", nrow = 1)
 

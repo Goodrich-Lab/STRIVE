@@ -22,6 +22,22 @@ source(fs::path(here::here("!directories.R")))
 source(fs::path(here::here("!load_cleaned_data.R")))
 ```
 
+## Simple linear or logistic regression
+
+**Exposure: normalized pfas**
+
+**Covars (included sig vars found in exposure correlation, also excluding some vars): source (both), sex (both), age_at_enrollment (exposure), smoking (exposure), sq_average_drink_per_day (exposure)**
+
+*sig vars from exposure correlation: 'age_at_enrollment','sex','bmi','sq_drink_alcohol','sq_average_drink_per_day', 'smoking','sq_water_bottled','sq_water_other_type', 'sq_water_faucet_filter','source_UNC','source_DUKE','source_Emory','source_NCSU'
+*sig vars from exposure correlation:'sex', 'source (reference: Emory)','trig_mg_d_l'
+
+**Outcome: natural log ALT, natural log AST, alt_cat1, ast_cat1, alt_cat2, ast_cat2**
+
+*alt_cat1/ast_cat1: Norm: <= 29IU/L(males), <= 19IU/L(females); High: > 29IU/L(males), > 19IU/L(females)
+
+*alt_cat2/ast_cat2: Norm: <= 33IU/L(males), <= 25IU/L(females); High: > 33IU/L(males), > 25IU/L(females)
+**Analysis: linear regression/logistic regression**
+
 ## Mixture analysis
 ```{r ast alt outcomes}
 # Set seed for reproducibility
@@ -178,12 +194,12 @@ res$feature<-factor(res$feature, levels=c("log_alt", "log_ast", "alt_cat1", "alt
 }
 
 # Plot results for legacy PFAS
-plot_legacy_cat <- plot_pfas(res_legacy %>% filter(outcome_type == "categorical"), "Effect of Legacy PFAS on outcomes", TRUE)
-plot_legacy_cont <- plot_pfas(res_legacy %>% filter(outcome_type == "continuous"), "Effect of Legacy PFAS on outcomes")
+plot_legacy_cat <- plot_pfas(res_legacy %>% filter(outcome_type == "categorical"), "Effect of Legacy PFAS on categorical outcomes", TRUE)
+plot_legacy_cont <- plot_pfas(res_legacy %>% filter(outcome_type == "continuous"), "Effect of Legacy PFAS on continuous outcomes")
 
 # Plot results for emerging PFAS
-plot_emerging_cat <- plot_pfas(res_emerging %>% filter(outcome_type == "categorical"), "Effect of Emerging PFAS on outcomes", TRUE)
-plot_emerging_cont <- plot_pfas(res_emerging %>% filter(outcome_type == "continuous"), "Effect of Emerging PFAS on outcomes")
+plot_emerging_cat <- plot_pfas(res_emerging %>% filter(outcome_type == "categorical"), "Effect of Emerging PFAS on categorical outcomes", TRUE)
+plot_emerging_cont <- plot_pfas(res_emerging %>% filter(outcome_type == "continuous"), "Effect of Emerging PFAS on continuous outcomes")
 
 # Print plots
 print(plot_legacy_cont)
@@ -192,7 +208,6 @@ print(plot_legacy_cat)
 print(plot_emerging_cat)
 
 ```
-
 
 # Tables: adjusted association of PFAS mixture with outcomes
 ```{r mixture analysis}
