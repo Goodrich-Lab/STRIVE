@@ -15,7 +15,7 @@ editor_options:
 ```{r setup univariate analysis pfas, include=FALSE, echo=FALSE}
 options(knitr.table.format = "html")
 knitr::opts_chunk$set(echo = TRUE,warning=FALSE, message = FALSE, cache=FALSE,collapse=FALSE)
-
+# 
 source(fs::path(here::here("!libraries.R")))
 source(fs::path(here::here("!directories.R")))
 # source(fs::path(here::here("functions.R")))
@@ -39,7 +39,6 @@ source(fs::path(here::here("!load_cleaned_data.R")))
 **Analysis: linear regression/logistic regression**
 
 ```{r analysis alt ast endpoints}
-# Perform linear regression using epiomics package
 ## outcome: natural log alt, natural log ast
 covars <- c("source", "sex", "age_at_enrollment", "smoking", "sq_average_drink_per_day")
 
@@ -51,8 +50,9 @@ res_cont <- epiomics::owas(data,
                       omics = pfas_name_scld,
                       covars = covars,
                       var_exposure_or_outcome = "outcome",  
-                      family = "gaussian",  # Use "gaussian" for linear regression
+                      family = "gaussian",  
                       conf_int = TRUE)
+
 ## outcome: alt_cat1, ast_cat1, alt_cat2, ast_cat2
 res_cat <- epiomics::owas(data,
                       var = con_end1, 

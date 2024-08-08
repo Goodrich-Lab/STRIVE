@@ -2084,8 +2084,8 @@ pheatmap(result_df,
          fontsize_col = 8   # Adjust column label font size
 )
 
-grid.text("R squared", x = 0.96, y = 0.89, gp = gpar(fontsize = 10))
-grid.text("*adjusted P<0.05", x = 0.97, y = 0.51, gp = gpar(fontsize = 6, fontface = "italic"))
+grid.text("R squared", x = 0.96, y = 0.90, gp = gpar(fontsize = 10))
+grid.text("*adjusted P<0.05", x = 0.96, y = 0.86, gp = gpar(fontsize = 6, fontface = "italic"))
 
 #####
 # Forest plot for the correlation coefficient (SE)
@@ -2173,32 +2173,6 @@ new_sig_factor <- c(
 
 combined_mean <- combined_mean %>%
   mutate(Factor = recode(Factor, !!!new_sig_factor))
-
-custom_colors <- colorRampPalette(brewer.pal(3, "RdYlBu"))(100)
-
-forest_plot <- ggplot(combined_mean, aes(x = Average_Coeff, y = Factor, color = Average_Coeff)) +
-  geom_point(size = 3) +
-  geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper), height = 0.2) +
-  scale_color_gradientn(colors = custom_colors) +
-  labs(
-    x = "Beta coefficient",
-    y = "Confounders",
-    color = "Coefficient",
-    title = "Average Coefficients of Confounders by PFAS Group"
-  ) +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom",
-    axis.text.y = element_text(size = 10),
-    axis.title = element_text(size = 12)
-  ) +
-  facet_wrap(~ PFAS_Group, scales = "free_x", nrow = 1)
-
-print(forest_plot)
-
-###
-data_min <- min(second_set_df)
-data_max <- max(second_set_df)
 
 forest_plot <- ggplot(combined_mean, aes(x = Average_Coeff, y = Factor, color = Average_Coeff)) +
   geom_point(size = 0.9) +
@@ -2601,8 +2575,8 @@ pheatmap(result_df,
 )
 
 
-grid.text("R squared", x = 0.95, y = 0.87, gp = gpar(fontsize = 10))
-grid.text("*adjusted P<0.05", x = 0.96, y = 0.50, gp = gpar(fontsize = 6, fontface = "italic"))
+grid.text("R squared", x = 0.96, y = 0.90, gp = gpar(fontsize = 10))
+grid.text("*adjusted P<0.05", x = 0.96, y = 0.86, gp = gpar(fontsize = 6, fontface = "italic"))
 
 #####
 # Forest plot for the correlation coefficient (SE)
@@ -2707,9 +2681,13 @@ print(forest_plot)
 
 ```
 
+#Table 1
+```{r}
+stats <- table1(~. |retemp_data$alt_cat2, data = retemp_data %>% dplyr::select(all_of(pfas_name_analysis), all_of(potential_conf),c("alt_u_l","ast_u_l")))
 
 
-
+stats
+```
 
 
 

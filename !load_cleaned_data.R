@@ -34,6 +34,7 @@ potential_conf <- c("source", "age_at_enrollment","sex", "bmi",
 
 
 covars <- c("source", "age_at_enrollment", "sex","smoking", "sq_average_drink_per_day")
+
 pfas_name_scld <- paste0(pfas_name_analysis,"_", "scld")
 legacy_scld <- paste0(legacy,"_", "scld")
 emerging_scld <- paste0(emerging, "_", "scld")

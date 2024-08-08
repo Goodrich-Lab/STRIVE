@@ -1,4 +1,5 @@
 # Load libraries
+library(table1)
 library(janitor)
 library(reshape2)
 library(corrplot)
