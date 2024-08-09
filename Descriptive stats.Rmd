@@ -2683,6 +2683,7 @@ print(forest_plot)
 
 #Table 1
 ```{r}
+retemp_data <- data %>% dplyr::filter(!is.na(alt_cat2))
 stats <- table1(~. |retemp_data$alt_cat2, data = retemp_data %>% dplyr::select(all_of(pfas_name_analysis), all_of(potential_conf),c("alt_u_l","ast_u_l")))
 
 
