@@ -1,0 +1,333 @@
+---
+title: 'STRIVE'
+subtitle: "Final Analysis"
+author: "Hongxu Wang"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup univariate analysis pfas, include=FALSE, echo=FALSE}
+options(knitr.table.format = "html")
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE, message = FALSE, cache=FALSE,collapse=FALSE)
+# 
+source(fs::path(here::here("!libraries.R")))
+source(fs::path(here::here("!directories.R")))
+# source(fs::path(here::here("functions.R")))
+source(fs::path(here::here("!load_cleaned_data.R")))
+```
+
+## Simple linear or logistic regression
+
+**Exposure: normalized pfas**
+
+**Covars (included sig vars found in exposure correlation, also excluding some vars): source (both), sex (both), age_at_enrollment (exposure), sq_average_drink_per_day (exposure)**
+
+*sig vars from exposure correlation:'age_at_enrollment','sex','bmi','smoking','drinking history','drinking frequency','water bottled','water other type','water faucet filter', 'source_UNC','source_DUKE','source_Emory','source_NCSU'
+*sig vars from exposure correlation:'sex', 'source','trig_mg_d_l'
+
+**Outcome: natural log ALT, natural log AST, alt_cat1, ast_cat1, alt_cat2, ast_cat2**
+
+*alt_cat1/ast_cat1: Norm: <= 29IU/L(males), <= 19IU/L(females); High: > 29IU/L(males), > 19IU/L(females)
+
+*alt_cat2/ast_cat2: Norm: <= 33IU/L(males), <= 25IU/L(females); High: > 33IU/L(males), > 25IU/L(females)
+**Analysis: linear regression/logistic regression**
+
+```{r analysis alt ast endpoints}
+## outcome: natural log alt, natural log ast
+covars <- c("source", "sex", "age_at_enrollment", "sq_average_drink_per_day")
+
+emerging <- c("pfbs", "pf_pe_a","pf_pe_s", "pf_hp_a")
+pfas_name_analysis <- c("pf_hx_s","pfda","pfna","pfos",
+                        "pf_hp_a","pfbs", "pfoa","pf_pe_a",
+                        "pf_un_a","pf_hp_s","pf_do_a","pf_pe_s")
+legacy <- c("pf_hx_s","pfda","pfna","pfos",
+            "pfoa","pf_un_a","pf_hp_s",
+            "pf_do_a")
+pfas_name_log2 <- paste0(pfas_name_analysis,"_", "log2")
+emerging_log2 <- paste0(emerging, "_", "log2")
+legacy_log2 <- paste0(legacy, "_","log2")
+
+#con_end <-c("log_alt", "log_ast")
+con_end <-c("log_alt")
+#con_end1 <-c("alt_cat1", "alt_cat2", "ast_cat1", "ast_cat2")
+con_end1 <-c("alt_cat2")
+
+res_cont <- epiomics::owas(data,
+                      var = con_end,  
+                      omics = pfas_name_log2,
+                      covars = covars,
+                      var_exposure_or_outcome = "outcome",  
+                      family = "gaussian",  
+                      conf_int = TRUE)
+
+## outcome: alt_cat1, ast_cat1, alt_cat2, ast_cat2
+res_cat <- epiomics::owas(data,
+                      var = con_end1, 
+                      omics = pfas_name_log2,
+                      covars = covars,
+                      var_exposure_or_outcome = "outcome",  
+                      family = "binomial", 
+                      conf_int = TRUE,
+                      ref_group = "Norm")
+res <- res_cont %>% mutate(outcome_type = "continuous") %>%
+  bind_rows(res_cat %>% mutate(outcome_type ="categorical"))
+
+# Adding sig variable to indicate the significance and rename PFAS
+res1 <- res %>%
+  mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~ "Sig.(FDR < 0.05)",
+                         p_value < 0.05 ~ "Sig.(p value < 0.05)", 
+                         TRUE ~ "Not Sig.")) %>%
+  mutate(plot_name = case_when(
+    grepl("pfba", feature_name) ~ "PFBA",
+    grepl("pf_hp_a", feature_name) ~ "PFHpA",
+    grepl("pf_pe_s", feature_name) ~ "PFPeS",
+    grepl("pfbs", feature_name) ~ "PFBS",
+    grepl("pf_hx_a", feature_name) ~ "PFHxA",
+    grepl("pf_do_a", feature_name) ~ "PFDoA",
+    grepl("pfda", feature_name) ~ "PFDA",
+    grepl("pf_pe_a", feature_name) ~ "PFPeA",
+    grepl("pf_un_a", feature_name) ~ "PFUnA",
+    grepl("pfna", feature_name) ~ "PFNA",
+    grepl("pfos", feature_name) ~ "PFOS",
+    grepl("pf_hx_s", feature_name) ~ "PFHxS",
+    grepl("pf_hp_s", feature_name) ~ "PFHpS",
+    grepl("pfoa", feature_name) ~ "PFOA",
+    grepl("pf3ons", feature_name) ~ "9CL-PF3ONS"
+  ))%>%
+  mutate(group = ifelse(feature_name %in% legacy_log2, "Long-chain", "Short-chain"))
+
+res1$var_name<-factor(res1$var_name, levels=c("log_alt", "log_ast", "alt_cat1", "alt_cat2", "ast_cat1", "ast_cat2"), labels=c("natural log alt", "natural log ast", "lowest cut alt", "highest cut alt", "lowest cut ast", "highest cut ast"))
+
+#write_csv(res1, fs::path(dir_result, "res_single_exposure_analysis_0218.csv"))
+
+```
+
+# cirrhosis in subset
+```{r}
+## outcome: case_control for cirrhosis
+#(dim(data[data$source=='NCSU',])[1]/dim(data)[1])*100
+data_ex_ncsu <- data[data$source !='NCSU',]
+
+data_renamed <- data_ex_ncsu[, c('log_ast_alt', 'log_ast', 'log_alt', 'case_control')]
+colnames(data_renamed) <- c('natural log AST/ALT', 'natural log AST', 'natural log ALT', 'Cirrhosis diagnosed')
+
+res_cat <- epiomics::owas(data_ex_ncsu,
+                      var = "case_control", 
+                      omics = pfas_name_log2,
+                      covars = covars,
+                      var_exposure_or_outcome = "outcome",  
+                      family = "binomial", 
+                      conf_int = TRUE,
+                      ref_group = "Healthy")
+
+# Adding sig variable to indicate the significance and rename PFAS
+res2 <- res_cat %>%
+  mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~ "Sig.(FDR < 0.05)",
+                         p_value < 0.05 ~ "Sig.(p value < 0.05)", 
+                         TRUE ~ "Not Sig.")) %>%
+  mutate(plot_name = case_when(
+    grepl("pfba", feature_name) ~ "PFBA",
+    grepl("pf_hp_a", feature_name) ~ "PFHpA",
+    grepl("pf_pe_s", feature_name) ~ "PFPeS",
+    grepl("pfbs", feature_name) ~ "PFBS",
+    grepl("pf_hx_a", feature_name) ~ "PFHxA",
+    grepl("pf_do_a", feature_name) ~ "PFDoA",
+    grepl("pfda", feature_name) ~ "PFDA",
+    grepl("pf_pe_a", feature_name) ~ "PFPeA",
+    grepl("pf_un_a", feature_name) ~ "PFUnA",
+    grepl("pfna", feature_name) ~ "PFNA",
+    grepl("pfos", feature_name) ~ "PFOS",
+    grepl("pf_hx_s", feature_name) ~ "PFHxS",
+    grepl("pf_hp_s", feature_name) ~ "PFHpS",
+    grepl("pfoa", feature_name) ~ "PFOA",
+    grepl("pf3ons", feature_name) ~ "9CL-PF3ONS"
+  ))%>%
+  mutate(group = ifelse(feature_name %in% legacy_log2, "Long-chain", "Short-chain"))
+
+
+# Combine res1 and res2
+res_combined <- bind_rows(res1, res2)
+
+# Save as a single CSV file
+write_csv(res_combined, fs::path(dir_result, "res_single_exposure_analysis_0227.csv"))
+
+# Print message for confirmation
+message("Combined results saved as res_single_exposure_analysis_0227.csv")
+
+```
+
+#ISEE 2025_2nd paper
+```{r}
+## outcome: natural log alt, natural log ast
+covars <- c("sex", "age_at_enrollment","source")
+
+emerging <- c("pfbs", "pf_pe_a","pf_pe_s", "pf_hp_a")
+pfas_name_analysis <- c("pf_hx_s","pfda","pfna","pfos",
+                        "pf_hp_a","pfbs", "pfoa","pf_pe_a",
+                        "pf_un_a","pf_hp_s","pf_do_a","pf_pe_s"
+)
+legacy <- c("pf_hx_s","pfda","pfna","pfos",
+            "pfoa","pf_un_a","pf_hp_s",
+            "pf_do_a")
+
+pfas_name_log2 <- paste0(pfas_name_analysis,"_", "log2")
+
+emerging_log2 <- paste0(emerging, "_", "log2")
+legacy_log2 <- paste0(legacy, "_","log2")
+
+#con_end <-c("log_alt", "log_ast")
+con_end <-c("log_trig", "log_ast")
+#con_end1 <-c("alt_cat1", "alt_cat2", "ast_cat1", "ast_cat2")
+con_end1 <-c("trig_flags", "ast_cat2","tg_ast","tg_ast_alt","alt_ast")
+
+res_cont <- epiomics::owas(data,
+                      var = con_end,  
+                      omics = pfas_name_log2,
+                      covars = covars,
+                      var_exposure_or_outcome = "outcome",  
+                      family = "gaussian",  
+                      conf_int = TRUE)
+
+## outcome: alt_cat1, ast_cat1, alt_cat2, ast_cat2
+res_cat <- epiomics::owas(data,
+                      var = con_end1, 
+                      omics = pfas_name_log2,
+                      covars = covars,
+                      var_exposure_or_outcome = "outcome",  
+                      family = "binomial", 
+                      conf_int = TRUE,
+                      ref_group = "Norm")
+res <- res_cont %>% mutate(outcome_type = "continuous") %>%
+  bind_rows(res_cat %>% mutate(outcome_type ="categorical"))
+
+# Adding sig variable to indicate the significance and rename PFAS
+res1 <- res %>%
+  mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~ "Sig.(FDR < 0.05)",
+                         p_value < 0.05 ~ "Sig.(p value < 0.05)", 
+                         TRUE ~ "Not Sig.")) %>%
+  mutate(plot_name = case_when(
+    grepl("pfba", feature_name) ~ "PFBA",
+    grepl("pf_hp_a", feature_name) ~ "PFHpA",
+    grepl("pf_pe_s", feature_name) ~ "PFPeS",
+    grepl("pfbs", feature_name) ~ "PFBS",
+    grepl("pf_hx_a", feature_name) ~ "PFHxA",
+    grepl("pf_do_a", feature_name) ~ "PFDoA",
+    grepl("pfda", feature_name) ~ "PFDA",
+    grepl("pf_pe_a", feature_name) ~ "PFPeA",
+    grepl("pf_un_a", feature_name) ~ "PFUnA",
+    grepl("pfna", feature_name) ~ "PFNA",
+    grepl("pfos", feature_name) ~ "PFOS",
+    grepl("pf_hx_s", feature_name) ~ "PFHxS",
+    grepl("pf_hp_s", feature_name) ~ "PFHpS",
+    grepl("pfoa", feature_name) ~ "PFOA",
+    grepl("pf3ons", feature_name) ~ "9CL-PF3ONS"
+  ))%>%
+  mutate(group = ifelse(feature_name %in% legacy_log2, "Long-chain", "Short-chain"))
+
+res1$var_name<-factor(res1$var_name, levels=c("log_trig","log_ast", "trig_flags","ast_cat2","tg_ast","tg_ast_alt","alt_ast"), labels=c("natural log tg", "natural log ast", "high vs normal tg", "elevated ast","elevated tg and ast","elevated all","elevated alt and ast"))
+
+write_csv(res1, fs::path(dir_result, "res_single_exposure_analysis_ISEE.csv"))
+```
+
+#ISEE 2025_2nd paper by obesity status
+```{r}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(fs)
+
+# Define variables
+covars <- c("sex", "age_at_enrollment", "source")
+
+emerging <- c("pfbs", "pf_pe_a","pf_pe_s", "pf_hp_a")
+legacy <- c("pf_hx_s","pfda","pfna","pfos","pfoa","pf_un_a","pf_hp_s","pf_do_a")
+pfas_name_analysis <- c(legacy, "pf_hp_a", "pfbs", "pf_pe_a", "pf_pe_s")
+
+pfas_name_log2 <- paste0(pfas_name_analysis, "_log2")
+emerging_log2 <- paste0(emerging, "_log2")
+legacy_log2 <- paste0(legacy, "_log2")
+
+con_end <- c("log_trig", "log_ast")
+con_end1 <- c("trig_flags", "ast_cat2", "tg_ast", "tg_ast_alt", "alt_ast")
+
+# Create an empty result list
+all_results <- list()
+
+# Loop over obesity groups
+for (group_label in c("Obesity", "Non-obesity")) {
+  
+  data_group <- data %>% filter(obesity_status == group_label)
+  
+  # Continuous outcomes
+  res_cont <- epiomics::owas(data_group,
+                              var = con_end,  
+                              omics = pfas_name_log2,
+                              covars = covars,
+                              var_exposure_or_outcome = "outcome",  
+                              family = "gaussian",  
+                              conf_int = TRUE)
+  
+  # Categorical outcomes
+  res_cat <- epiomics::owas(data_group,
+                             var = con_end1, 
+                             omics = pfas_name_log2,
+                             covars = covars,
+                             var_exposure_or_outcome = "outcome",  
+                             family = "binomial", 
+                             conf_int = TRUE,
+                             ref_group = "Norm")
+  
+  # Combine
+  res <- res_cont %>% mutate(outcome_type = "continuous") %>%
+    bind_rows(res_cat %>% mutate(outcome_type = "categorical")) %>%
+    mutate(obesity_group = group_label)
+  
+  all_results[[group_label]] <- res
+}
+
+# Combine both strata
+res_combined <- bind_rows(all_results)
+
+# Add significance and plot labels
+res1 <- res_combined %>%
+  mutate(
+    sig = case_when(
+      p_value < 0.05 & adjusted_pval < 0.05 ~ "Sig.(FDR < 0.05)",
+      p_value < 0.05 ~ "Sig.(p value < 0.05)",
+      TRUE ~ "Not Sig."
+    ),
+    plot_name = case_when(
+      grepl("pfba", feature_name) ~ "PFBA",
+      grepl("pf_hp_a", feature_name) ~ "PFHpA",
+      grepl("pf_pe_s", feature_name) ~ "PFPeS",
+      grepl("pfbs", feature_name) ~ "PFBS",
+      grepl("pf_hx_a", feature_name) ~ "PFHxA",
+      grepl("pf_do_a", feature_name) ~ "PFDoA",
+      grepl("pfda", feature_name) ~ "PFDA",
+      grepl("pf_pe_a", feature_name) ~ "PFPeA",
+      grepl("pf_un_a", feature_name) ~ "PFUnA",
+      grepl("pfna", feature_name) ~ "PFNA",
+      grepl("pfos", feature_name) ~ "PFOS",
+      grepl("pf_hx_s", feature_name) ~ "PFHxS",
+      grepl("pf_hp_s", feature_name) ~ "PFHpS",
+      grepl("pfoa", feature_name) ~ "PFOA",
+      grepl("pf3ons", feature_name) ~ "9CL-PF3ONS"
+    ),
+    group = ifelse(feature_name %in% legacy_log2, "Long-chain", "Short-chain"),
+    var_name = factor(var_name,
+                      levels = c("log_trig", "log_ast", "trig_flags", "ast_cat2", "tg_ast", "tg_ast_alt", "alt_ast"),
+                      labels = c("natural log tg", "natural log ast", "high vs normal tg", "elevated ast",
+                                 "elevated tg and ast", "elevated all", "elevated alt and ast"))
+  )
+
+# Save result
+write_csv(res1, fs::path(dir_result, "res_single_exposure_analysis_ISEE_stratified_obesity.csv"))
+
+```
+

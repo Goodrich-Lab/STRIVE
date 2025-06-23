@@ -1,0 +1,525 @@
+---
+title: 'Figures'
+author: "Hongxu Wang"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+format:
+  html:
+    toc: true
+    toc-location: left
+    code-fold: true
+    df-print: paged
+editor: 
+  default-view: side-by-side
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r set up, include = TRUE, echo = TRUE, message=FALSE, warning=FALSE}
+
+source(fs::path(here::here(), "!directories.R"))
+# source(fs::path(here::here(), "!load_data.R"))
+
+options(knitr.table.format = "html", message = FALSE)
+```
+
+# Load Results
+```{r}
+res_single <- read_csv(fs::path(dir_result, "res_single_exposure_analysis_0227.csv"))
+
+res_mixture <- read_csv(fs::path(dir_result, "res_mixture_analysis_0227.csv"))
+```
+
+# Fig. Single and mixture result in one figure
+```{r}
+res_single1 <- res_single %>% 
+  mutate(var_name = case_when(var_name == "natural log alt" ~ "Natural log ALT",
+                              var_name == "highest cut alt" ~ "Elevated ALT", 
+                              var_name == "case_control" ~ "Cirrhosis")) %>%
+  mutate(plot_name = fct_reorder(plot_name, if_else(var_name == "Elevated ALT", estimate, NA_real_)))
+
+res_mixture1 <- res_mixture %>% 
+   mutate(var_name = case_when(var_name == "natural log alt" ~ "Natural log ALT",
+                           var_name == "highest cut alt" ~ "Elevated ALT", 
+                              var_name == "case_control" ~ "Cirrhosis"
+                              )) %>%
+  mutate(type = case_when(type == "Legacy" ~ "Long-chain",
+                          type == "Emerging" ~ "Short-chain",
+                          TRUE ~ type)) %>%
+  mutate(type = factor(type, levels = c("Short-chain","Long-chain")))
+
+levels = c("PFUnA","PFDA","PFDoA", "PFNA", 
+           "PFOS","PFOA", "PFHpS", "PFHxS", 
+            "PFPeS", "PFBS","PFHpA",  "PFPeA",
+           "PFAS mixture (S)","PFAS mixture (L)")
+
+res <- res_single1 %>% 
+  bind_rows(res_mixture1 %>% 
+              rename(estimate = psi,
+                     conf_low = lcl_psi,
+                     conf_high = ucl_psi) %>%
+              mutate(group = "Mixture") %>%
+              mutate(plot_name = ifelse(type == "Long-chain" ,
+                                        "PFAS mixture (L)",
+                                        "PFAS mixture (S)")))%>%
+  mutate(plot_name = factor(plot_name, levels = levels))%>%
+  mutate(sig = factor(sig, levels = c("Not Sig.", "Sig.(p value < 0.05)",
+                                      "Sig.(FDR < 0.05)")),
+         group = factor(group, levels = c("Long-chain", "Short-chain", "Mixture")))
+
+
+(p2 <- ggplot(res%>% filter(var_name == "Elevated ALT"), 
+              aes(x = exp(estimate), y = plot_name, color = sig)) +
+    geom_errorbar(aes(xmin = exp(conf_low), xmax = exp(conf_high)), 
+                  width = 0, position = position_dodge(width = 1)) +
+    geom_point(size = 1, position = position_dodge(width = 1)) +
+    scale_x_continuous(breaks = seq(0, 4.5, by = 1), limits = c(0, 4.5))+
+    geom_vline(xintercept = 1, linetype = 2, color = "grey") +
+    facet_grid(group ~ ., scales = "free", space = "free_y") +
+    labs(x = "Odds Ratio (95% CI)", y= "PFAS") +
+    scale_color_manual(values = c("black","blue","red"))+
+    guides(color = guide_legend(title = "Sig")) +
+    ggtitle("Elevated ALT")+
+    theme(
+      legend.position = "bottom",
+      panel.background = element_rect(fill="white"), 
+      strip.background = element_rect(fill = "white"),
+      strip.text.y = element_text(angle = 0, hjust = 0),
+      text = element_text(size = 12),
+      axis.title.y = element_blank(),
+      axis.line.x = element_line(color = "black"),
+      axis.line.y = element_line(color = "black"),
+      plot.title = element_text(size = 15, hjust = 0.5))
+  )
+
+ggsave(p2, filename = fs::path(dir_figures,
+                           "main_figures",
+                           "Fig. Single and mixture analysis effect.png"),
+       width = 5,
+       height = 3.5,
+       dpi = 300,
+       bg = "white")
+```
+
+# 2nd paper_ ISEE Load Results
+```{r}
+res_single <- read_csv(fs::path(dir_result, "res_single_exposure_analysis_ISEE.csv"))
+
+res_single_obesity <- read_csv(fs::path(dir_result, "res_single_exposure_analysis_ISEE_stratified_obesity.csv"))
+
+res_mixture <- read_csv(fs::path(dir_result, "res_mixture_analysis_ISEE_total_combined.csv"))
+
+res_mixture_obesity <- read_excel(fs::path(dir_result, "res_mixture_analysis_ISEE_stratified_obesity_combined.xlsx"))
+```
+
+# Fig. Single and mixture result in one figure
+```{r}
+res_single1 <- res_single %>% 
+  mutate(var_name = case_when(var_name == "natural log tg" ~ "Natural log TG",
+                              var_name == "natural log ast" ~ "Natural log AST",
+                              var_name == "high vs normal tg" ~ "Elevated TG",
+                              var_name == "elevated ast" ~ "Elevated AST",
+                              var_name == "elevated tg and ast" ~"Elevated TG and AST",
+                              var_name == "elevated all" ~"Elevated All",
+                              var_name == "elevated alt and ast" ~ "Elevated ALT and AST")) %>%
+  mutate(plot_name = fct_reorder(plot_name, if_else(var_name == "Elevated TG", estimate, NA_real_)))
+
+res_mixture1 <- res_mixture %>% 
+   mutate(var_name = case_when(feature == "log_trig" ~ "Natural log TG",
+                               feature == "log_ast" ~ "Natural log AST",
+                              feature == "trig_flags" ~ "Elevated TG",
+                              feature =="ast_cat2" ~ "Elevated AST",
+                              feature == "tg_ast" ~"Elevated TG and AST",
+                              feature == "tg_ast_alt" ~"Elevated All",
+                              feature == "alt_ast" ~ "Elevated ALT and AST"
+                            ,  TRUE ~ feature)) %>%
+  mutate(type = case_when(type == "Legacy" ~ "Long-chain",
+                          type == "Emerging" ~ "Short-chain",
+                          type == "Total" ~ "Total",
+                          TRUE ~ type)) %>%
+  mutate(type = factor(type, levels = c("Short-chain","Long-chain","Total")))
+
+res_mixture1<- res_mixture1 %>%
+  rename(estimate = psi,
+         conf_low = lcl_psi,
+         conf_high = ucl_psi) %>%
+  mutate(
+    group = "Mixture",
+    plot_name = case_when(
+      type == "Long-chain" ~ "PFAS mixture (L)",
+      type == "Short-chain" ~ "PFAS mixture (S)",
+      type == "Total" ~ "PFAS mixture (T)",
+      TRUE ~ type
+    )
+  )
+
+levels = c("PFUnA","PFDA","PFDoA", "PFNA", 
+           "PFOS","PFOA", "PFHpS", "PFHxS", 
+            "PFPeS", "PFBS","PFHpA",  "PFPeA",
+           "PFAS mixture (S)","PFAS mixture (L)","PFAS mixture (T)")
+
+res <- res_single1 %>% 
+  bind_rows(res_mixture1)%>%
+  mutate(
+    plot_name = factor(plot_name, levels = levels),
+    sig = factor(sig, levels = c("Not Sig.", "Sig.(p value < 0.05)", "Sig.(FDR < 0.05)")),
+    group = factor(group, levels = c("Long-chain", "Short-chain", "Mixture"))
+  )
+
+x_axis_limit <- 5
+
+(p2 <- ggplot(
+  res %>% filter(var_name %in% c(
+    "Elevated TG", "Elevated AST", "Elevated TG and AST", 
+    "Elevated ALT and AST", "Elevated All"
+  )),
+  aes(x = exp(estimate), y = plot_name, color = sig)
+) +
+  geom_errorbar(aes(xmin = exp(conf_low), xmax = pmin(exp(conf_high), x_axis_limit)), 
+                width = 0, position = position_dodge(width = 1)) +
+  geom_point(size = 1, position = position_dodge(width = 1)) +
+
+  # Arrow segment and tail line
+  geom_segment(
+    data = res %>% filter(
+      var_name %in% c("Elevated TG", "Elevated AST", "Elevated TG and AST", 
+                      "Elevated ALT and AST", "Elevated All"),
+      exp(conf_high) > x_axis_limit
+    ),
+    aes(x = x_axis_limit - 0.2, xend = x_axis_limit + 0.1, y = plot_name, yend = plot_name),
+    arrow = arrow(length = unit(0.08, "inches")),
+    size = 0.5,
+    color = "black",
+    inherit.aes = FALSE
+  ) +
+
+  scale_x_continuous(breaks = seq(0, x_axis_limit, by = 1), limits = c(0, x_axis_limit + 0.5)) +
+  geom_vline(xintercept = 1, linetype = 2, color = "grey") +
+
+  facet_grid(group ~ var_name, scales = "free", space = "free") +
+
+  labs(x = "Odds Ratio (95% CI)", y = "PFAS") +
+  scale_color_manual(values = c("black", "blue", "red")) +
+  guides(color = guide_legend(title = "Sig")) +
+  
+  theme(
+    legend.position = "bottom",
+    panel.background = element_rect(fill = "white"), 
+    strip.background = element_rect(fill = "white"),
+    strip.text.y = element_text(angle = 0, hjust = 0),
+    strip.text.x = element_text(face = "bold"),
+    text = element_text(size = 12),
+    axis.title.y = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black"),
+    plot.title = element_text(size = 15, hjust = 0.5)
+  )
+)
+
+ggsave(p2, filename = fs::path(dir_figures,
+                           "main_figures",
+                           "Fig. Single and mixture analysis effect_ISEE.png"),
+       width = 5,
+       height = 3.5,
+       dpi = 300,
+       bg = "white")
+
+## Natural log TG & AST
+# Natural log TG & AST with group labels on the right
+(p_combined <- ggplot(
+  res %>% filter(var_name %in% c("Natural log TG", "Natural log AST")), 
+  aes(x = estimate, y = plot_name, color = sig)
+) +
+  geom_errorbar(aes(xmin = conf_low, xmax = conf_high), 
+                width = 0, position = position_dodge(width = 1)) +
+  geom_point(size = 1, position = position_dodge(width = 1)) +
+  scale_x_continuous(breaks = seq(-0.2, 0.2, by = 0.05), limits = c(-0.2, 0.2)) +
+  geom_vline(xintercept = 0, linetype = 2, color = "grey") +
+
+  # ✅ Add group facet on the Y-axis (right-hand labels)
+  facet_grid(group ~ var_name, scales = "free", space = "free") +
+
+  labs(x = "Coefficient (95% CI)", y = "PFAS") +
+  scale_color_manual(values = c("black", "blue", "red")) +
+  guides(color = guide_legend(title = "Sig")) +
+  
+  theme(
+    legend.position = "bottom",
+    panel.background = element_rect(fill = "white"), 
+    strip.background = element_rect(fill = "white"),
+    strip.text.y = element_text(angle = 0, hjust = 0),
+    strip.text.x = element_text(face = "bold"),
+    text = element_text(size = 12),
+    axis.title.y = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black"),
+    plot.title = element_text(size = 15, hjust = 0.5)
+  )
+)
+
+# Save the figure
+ggsave(
+  p_combined,
+  filename = fs::path(dir_figures, "main_figures", "Fig. Natural log TG and AST effect_ISEE.png"),
+  width = 8,
+  height = 4,
+  dpi = 300,
+  bg = "white"
+)
+
+```
+
+#2nd paper by obesity status
+```{r}
+res_single_obesity1 <- res_single_obesity %>% 
+  mutate(var_name = case_when(var_name == "natural log tg" ~ "Natural log TG",
+                              var_name == "natural log ast" ~ "Natural log AST",
+                              var_name == "high vs normal tg" ~ "Elevated TG",
+                              var_name == "elevated ast" ~ "Elevated AST",
+                              var_name == "elevated tg and ast" ~"Elevated TG and AST",
+                              var_name == "elevated all" ~"Elevated All",
+                              var_name == "elevated alt and ast" ~ "Elevated ALT and AST")) %>%
+  mutate(plot_name = fct_reorder(plot_name, if_else(var_name == "Elevated TG", estimate, NA_real_)))
+
+res_mixture_obesity <- res_mixture_obesity %>%
+  rename(obesity_group = group)
+
+res_mixture_obesity1 <- res_mixture_obesity %>% 
+   mutate(var_name = case_when(feature == "log_trig" ~ "Natural log TG",
+                               feature == "log_ast" ~ "Natural log AST",
+                              feature == "trig_flags" ~ "Elevated TG",
+                              feature =="ast_cat2" ~ "Elevated AST",
+                              feature == "tg_ast" ~"Elevated TG and AST",
+                              feature == "tg_ast_alt" ~"Elevated All",
+                              feature == "alt_ast" ~ "Elevated ALT and AST"
+                            ,  TRUE ~ feature)) %>%
+  mutate(type = case_when(type == "legacy_pfas" ~ "Long-chain",
+                          type == "emerging_pfas" ~ "Short-chain",
+                          type == "all_pfas" ~ "Total",
+                          TRUE ~ type)) %>%
+  mutate(type = factor(type, levels = c("Short-chain","Long-chain","Total")))
+
+res_mixture_obesity1<- res_mixture_obesity1 %>%
+  rename(estimate = psi,
+         conf_low = lcl_psi,
+         conf_high = ucl_psi) %>%
+  mutate(
+    group = "Mixture",
+    plot_name = case_when(
+      type == "Long-chain" ~ "PFAS mixture (L)",
+      type == "Short-chain" ~ "PFAS mixture (S)",
+      type == "Total" ~ "PFAS mixture (T)",
+      TRUE ~ type
+    )
+  )
+
+levels = c("PFUnA","PFDA","PFDoA", "PFNA", 
+           "PFOS","PFOA", "PFHpS", "PFHxS", 
+            "PFPeS", "PFBS","PFHpA",  "PFPeA",
+           "PFAS mixture (S)","PFAS mixture (L)","PFAS mixture (T)")
+
+res <- res_single_obesity1 %>% 
+  bind_rows(res_mixture_obesity1)%>%
+  mutate(
+    plot_name = factor(plot_name, levels = levels),
+    sig = factor(sig, levels = c("Not Sig.", "Sig.(p value < 0.05)", "Sig.(FDR < 0.05)")),
+    group = factor(group, levels = c("Long-chain", "Short-chain", "Mixture"))
+  )
+
+###
+#A.obesity
+res_ob<-res %>% filter(obesity_group == "Obesity")
+               
+x_axis_limit <- 6
+
+(p3_1 <- ggplot(
+  res_ob %>% filter(var_name %in% c(
+    "Elevated TG", "Elevated AST", "Elevated TG and AST", 
+    "Elevated ALT and AST", "Elevated All"
+  )),
+  aes(x = exp(estimate), y = plot_name, color = sig)
+) +
+  geom_errorbar(aes(xmin = exp(conf_low), xmax = pmin(exp(conf_high), x_axis_limit)), 
+                width = 0, position = position_dodge(width = 1)) +
+  geom_point(size = 1, position = position_dodge(width = 1)) +
+
+  geom_segment(
+    data = res_ob %>% filter(
+      var_name %in% c("Elevated TG", "Elevated AST", "Elevated TG and AST", 
+                      "Elevated ALT and AST", "Elevated All"),
+      exp(conf_high) > x_axis_limit
+    ),
+    aes(x = x_axis_limit - 0.2, xend = x_axis_limit + 0.1, 
+        y = plot_name, yend = plot_name),
+    arrow = arrow(length = unit(0.08, "inches")),
+    size = 0.5, color = "black", inherit.aes = FALSE
+  ) +
+
+  scale_x_continuous(breaks = seq(0, x_axis_limit, 1), limits = c(0, x_axis_limit + 0.5)) +
+  geom_vline(xintercept = 1, linetype = 2, color = "grey") +
+  facet_grid(group ~ var_name, scales = "free", space = "free") +
+  labs(x = "Odds Ratio (95% CI)", y = "PFAS") +
+  scale_color_manual(values = c("black", "blue", "red")) +
+  guides(color = guide_legend(title = "Sig")) +
+  theme(
+    legend.position = "bottom",
+    panel.background = element_rect(fill = "white"), 
+    strip.background = element_rect(fill = "white"),
+    strip.text.y = element_text(angle = 0, hjust = 0),
+    strip.text.x = element_text(face = "bold"),
+    text = element_text(size = 12),
+    axis.title.y = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black"),
+    plot.title = element_text(size = 15, hjust = 0.5)
+  )
+)
+
+ggsave(p3_1, filename = fs::path(dir_figures,
+                           "main_figures",
+                           "Fig. obesity_ISEE.png"),
+       width = 5,
+       height = 3.5,
+       dpi = 300,
+       bg = "white")
+
+# B. Non-obesity
+res_nonob <- res %>% filter(obesity_group == "Non-obesity")
+
+x_axis_limit <- 6
+
+(p3_2 <- ggplot(
+  res_nonob %>% filter(var_name %in% c(
+    "Elevated TG", "Elevated AST", "Elevated TG and AST", 
+    "Elevated ALT and AST", "Elevated All"
+  )),
+  aes(x = exp(estimate), y = plot_name, color = sig)
+) +
+  geom_errorbar(aes(xmin = exp(conf_low), xmax = pmin(exp(conf_high), x_axis_limit)), 
+                width = 0, position = position_dodge(width = 1)) +
+  geom_point(size = 1, position = position_dodge(width = 1)) +
+
+  geom_segment(
+    data = res_nonob %>% filter(
+      var_name %in% c("Elevated TG", "Elevated AST", "Elevated TG and AST", 
+                      "Elevated ALT and AST", "Elevated All"),
+      exp(conf_high) > x_axis_limit
+    ),
+    aes(x = x_axis_limit - 0.2, xend = x_axis_limit + 0.1, y = plot_name, yend = plot_name),
+    arrow = arrow(length = unit(0.08, "inches")),
+    size = 0.5,
+    color = "black",
+    inherit.aes = FALSE
+  ) +
+
+  scale_x_continuous(breaks = seq(0, x_axis_limit, by = 1), limits = c(0, x_axis_limit + 0.5)) +
+  geom_vline(xintercept = 1, linetype = 2, color = "grey") +
+
+  facet_grid(group ~ var_name, scales = "free", space = "free") +
+
+  labs(x = "Odds Ratio (95% CI)", y = "PFAS") +
+  scale_color_manual(values = c("black", "blue", "red")) +
+  guides(color = guide_legend(title = "Sig")) +
+
+  theme(
+    legend.position = "bottom",
+    panel.background = element_rect(fill = "white"), 
+    strip.background = element_rect(fill = "white"),
+    strip.text.y = element_text(angle = 0, hjust = 0),
+    strip.text.x = element_text(face = "bold"),
+    text = element_text(size = 12),
+    axis.title.y = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black"),
+    plot.title = element_text(size = 15, hjust = 0.5)
+  )
+)
+
+ggsave(p3_2, filename = fs::path(dir_figures,
+                           "main_figures",
+                           "Fig. NonObesity_Effect_ISEE.png"),
+       width = 5,
+       height = 3.5,
+       dpi = 300,
+       bg = "white")
+
+## Natural log TG & AST
+# Natural log TG & AST with group labels on the right
+#A. Obesity
+res_ob <- res %>% filter(obesity_group == "Obesity")
+
+(p_combined_ob <- ggplot(
+  res_ob %>% filter(var_name %in% c("Natural log TG", "Natural log AST")), 
+  aes(x = estimate, y = plot_name, color = sig)
+) +
+  geom_errorbar(aes(xmin = conf_low, xmax = conf_high), 
+                width = 0, position = position_dodge(width = 1)) +
+  geom_point(size = 1, position = position_dodge(width = 1)) +
+  scale_x_continuous(breaks = seq(-0.4, 0.4, by = 0.1), limits = c(-0.4, 0.4)) +
+  geom_vline(xintercept = 0, linetype = 2, color = "grey") +
+  facet_grid(group ~ var_name, scales = "free", space = "free") +
+  labs(x = "Coefficient (95% CI)", y = "PFAS") +
+  scale_color_manual(values = c("black", "blue", "red")) +
+  guides(color = guide_legend(title = "Sig")) +
+  theme(
+    legend.position = "bottom",
+    panel.background = element_rect(fill = "white"), 
+    strip.background = element_rect(fill = "white"),
+    strip.text.y = element_text(angle = 0, hjust = 0),
+    strip.text.x = element_text(face = "bold"),
+    text = element_text(size = 12),
+    axis.title.y = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black"),
+    plot.title = element_text(size = 15, hjust = 0.5)
+  )
+)
+
+ggsave(
+  p_combined_ob,
+  filename = fs::path(dir_figures, "main_figures", "FigA_NaturalLogTG_AST_Obesity.png"),
+  width = 8,
+  height = 4,
+  dpi = 300,
+  bg = "white"
+)
+
+#B. Non-obesity
+res_nonob <- res %>% filter(obesity_group == "Non-obesity")
+
+(p_combined_nonob <- ggplot(
+  res_nonob %>% filter(var_name %in% c("Natural log TG", "Natural log AST")), 
+  aes(x = estimate, y = plot_name, color = sig)
+) +
+  geom_errorbar(aes(xmin = conf_low, xmax = conf_high), 
+                width = 0, position = position_dodge(width = 1)) +
+  geom_point(size = 1, position = position_dodge(width = 1)) +
+  scale_x_continuous(breaks = seq(-0.4, 0.4, by = 0.1), limits = c(-0.4, 0.4)) +
+  geom_vline(xintercept = 0, linetype = 2, color = "grey") +
+  facet_grid(group ~ var_name, scales = "free", space = "free") +
+  labs( x = "Coefficient (95% CI)", y = "PFAS") +
+  scale_color_manual(values = c("black", "blue", "red")) +
+  guides(color = guide_legend(title = "Sig")) +
+  theme(
+    legend.position = "bottom",
+    panel.background = element_rect(fill = "white"), 
+    strip.background = element_rect(fill = "white"),
+    strip.text.y = element_text(angle = 0, hjust = 0),
+    strip.text.x = element_text(face = "bold"),
+    text = element_text(size = 12),
+    axis.title.y = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black"),
+    plot.title = element_text(size = 15, hjust = 0.5)
+  )
+)
+
+ggsave(
+  p_combined_nonob,
+  filename = fs::path(dir_figures, "main_figures", "FigB_NaturalLogTG_AST_NonObesity.png"),
+  width = 8,
+  height = 4,
+  dpi = 300,
+  bg = "white"
+)
+```
+

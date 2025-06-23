@@ -1,0 +1,932 @@
+---
+title: 'STRIVE'
+subtitle: "Final Analysis"
+author: "Hongxu Wang"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup mixture analysis, include=FALSE, echo=FALSE}
+options(knitr.table.format = "html")
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE, message = FALSE, cache=FALSE,collapse=FALSE)
+
+source(fs::path(here::here("!libraries.R")))
+source(fs::path(here::here("!directories.R")))
+# source(fs::path(here::here("functions.R")))
+source(fs::path(here::here("!load_cleaned_data.R")))
+```
+
+## Mixture analysis
+```{r ast alt outcomes}
+# Set seed for reproducibility
+set.seed(1234)
+
+con_end <-c("log_alt")
+con_end1 <-c("alt_cat2")
+
+# Prepare the data
+data_scaled_analysis <- data %>% 
+  drop_na(all_of(con_end), all_of(covars)) %>%
+  mutate_at(.vars = con_end1,
+            .funs = ~ifelse(. == "Norm", 0, 1))
+
+# Perform OWAS analysis using qgcomp on legacy PFAS
+res_legacy_cont <- data.frame()
+for(q in 4){
+    res_temp <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                     expnms = legacy_log2,
+                                     omics = con_end,
+                                     covars = covars,
+                                     family = "gaussian",  # Gaussian for linear regression
+                                     q = q)%>%
+    mutate(parameter = paste0("q = ", q))%>%
+    dplyr::select(parameter, everything())
+  res_legacy_cont <- res_legacy_cont %>% bind_rows(res_temp)
+}
+
+res_legacy_cat <- data.frame()
+for(q in 4){
+  res_temp <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                     expnms = legacy_log2,
+                                     omics = con_end1,
+                                     covars = covars,
+                                     family = "binomial", 
+                                     q = q)%>%
+    mutate(parameter = paste0("q = ", q))%>%
+    dplyr::select(parameter, everything())
+  res_legacy_cat <- res_legacy_cat %>% bind_rows(res_temp)
+}
+
+
+res_legacy <- res_legacy_cont %>% 
+  mutate(outcome_type = "continuous") %>%
+  bind_rows(res_legacy_cat %>% 
+              mutate(outcome_type = "categorical"))%>%
+  mutate(coef = psi,
+         ci_low = lcl_psi,
+         ci_high = ucl_psi) %>%
+  mutate(type = "legacy_pfas") %>%
+  dplyr::select(type, everything()) %>%
+  mutate(coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3)) %>%
+  dplyr::select(parameter, type, coef_ci, everything())%>%
+  mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~
+                           "Sig.(FDR < 0.05)",
+                          p_value < 0.05 ~ "Sig.(p value < 0.05)", 
+                         p_value >= 0.05 ~ "Not Sig."))
+
+# Perform OWAS analysis using qgcomp on emerging PFAS
+res_emerging_cont <- data.frame()
+
+for(q in 4){
+  res_temp <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                       expnms = emerging_log2,
+                                       omics = con_end,
+                                       covars = covars,
+                                       family = "gaussian",  
+                                       q = q) %>%
+    mutate(parameter = paste0("q = ", q)) %>%
+    dplyr::select(parameter, everything())
+  res_emerging_cont <- res_emerging_cont %>% bind_rows(res_temp)
+}
+
+res_emerging_cat <- data.frame()
+
+for(q in 4){
+  res_temp <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                       expnms = emerging_log2,
+                                       omics = con_end1,
+                                       covars = covars,
+                                       family = "binomial", 
+                                       q = q) %>%
+    mutate(parameter = paste0("q = ", q)) %>%
+    dplyr::select(parameter, everything())
+  res_emerging_cat <- res_emerging_cat %>% bind_rows(res_temp)
+  }
+
+res_emerging <- res_emerging_cont %>% 
+  mutate(outcome_type = "continuous") %>% 
+  bind_rows(res_emerging_cat %>% 
+              mutate(outcome_type = "categorical"))%>%
+  mutate(coef = psi,
+         ci_low = lcl_psi,
+         ci_high = ucl_psi) %>%
+  mutate(type = "emerging_pfas") %>%
+  dplyr::select(type, everything()) %>%
+  mutate(coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3)) %>%
+  dplyr::select(parameter, type, coef_ci, everything())%>%
+  mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~
+                           "Sig.(FDR < 0.05)",
+                          p_value < 0.05 ~ "Sig.(p value < 0.05)", 
+                         p_value >= 0.05 ~ "Not Sig."))
+
+# Bind results for bar plot
+res <- res_legacy %>% 
+  dplyr::select(parameter:adjusted_pval, outcome_type) %>% 
+  bind_rows(res_emerging %>% 
+              dplyr::select(parameter:adjusted_pval, outcome_type)) 
+
+
+
+# Transform coefficients and confidence intervals to OR for categorical results
+transform_to_or <- function(df) {
+  df %>%
+    mutate(
+      coef = exp(psi),
+      ci_low = exp(lcl_psi),
+      ci_high = exp(ucl_psi)
+    )
+}
+res_categorical <- res %>% filter(feature == "alt_cat2") %>% mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~ "Sig.(FDR < 0.05)", p_value < 0.05 ~ "Sig.(p value < 0.05)", TRUE ~ "Not Sig."))
+
+res_categorical$feature<-factor(res_categorical$feature, levels=c("log_alt", "log_ast", "alt_cat1", "alt_cat2", "ast_cat1", "ast_cat2"), labels=c("natural log alt", "natural log ast", "lowest cut alt", "highest cut alt", "lowest cut ast", "highest cut ast"))
+
+res_categorical$type <- factor(res_categorical$type, levels = c("legacy_pfas", "emerging_pfas"), labels = c("Long-chain", "Short-chain"))
+res_categorical <- transform_to_or(res_categorical)
+
+res_continuous <- res %>% filter(feature == "log_alt") %>% mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~ "Sig.(FDR < 0.05)", p_value < 0.05 ~ "Sig.(p value < 0.05)", TRUE ~ "Not Sig."))
+
+res_continuous$feature<-factor(res_continuous$feature, levels=c("log_alt", "log_ast", "alt_cat1", "alt_cat2", "ast_cat1", "ast_cat2"), labels=c("natural log alt", "natural log ast", "lowest cut alt", "highest cut alt", "lowest cut ast", "highest cut ast"))
+
+res_continuous$type <- factor(res_continuous$type, levels = c("legacy_pfas", "emerging_pfas"), labels = c("Long-chain", "Short-chain"))
+
+transform_to_or <- function(df) {
+  df %>%
+    mutate(
+      coef = (psi),
+      ci_low = (lcl_psi),
+      ci_high = (ucl_psi)
+    )
+}
+
+res_continuous <- transform_to_or(res_continuous)
+
+res_df <- res_categorical %>% bind_rows(res_continuous)
+colnames(res_df)[colnames(res_df) == "feature"] <- "var_name"
+
+#write_csv(res_df, fs::path(dir_result, "res_mixture_analysis_0218.csv"))
+```
+
+# cirrhosis in subset
+```{r}
+# Prepare the data
+data_scaled_analysis <- data_ex_ncsu %>% 
+  drop_na(all_of('case_control'), all_of(covars)) %>%
+  mutate_at(.vars = 'case_control',
+            .funs = ~ifelse(. == "Healthy", 0, 1))
+
+res_legacy_cat <- data.frame()
+for(q in 4){
+  res_temp <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                     expnms = legacy_log2,
+                                     omics = 'case_control',
+                                     covars = covars,
+                                     family = "binomial", 
+                                     q = q)%>%
+    mutate(parameter = paste0("q = ", q))%>%
+    dplyr::select(parameter, everything())
+  res_legacy_cat <- res_legacy_cat %>% bind_rows(res_temp)
+}
+
+
+res_legacy <- res_legacy_cat %>% 
+  mutate(coef = psi,
+         ci_low = lcl_psi,
+         ci_high = ucl_psi) %>%
+  mutate(type = "legacy_pfas") %>%
+  dplyr::select(type, everything()) %>%
+  mutate(coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3)) %>%
+  dplyr::select(parameter, type, coef_ci, everything())%>%
+  mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~
+                           "Sig.(FDR < 0.05)",
+                          p_value < 0.05 ~ "Sig.(p value < 0.05)", 
+                         p_value >= 0.05 ~ "Not Sig."))
+
+res_emerging_cat <- data.frame()
+for(q in 4){
+  res_temp <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                       expnms = emerging_log2,
+                                       omics = 'case_control',
+                                       covars = covars,
+                                       family = "binomial", 
+                                       q = q) %>%
+    mutate(parameter = paste0("q = ", q)) %>%
+    dplyr::select(parameter, everything())
+  res_emerging_cat <- res_emerging_cat %>% bind_rows(res_temp)
+  }
+
+res_emerging <- res_emerging_cat %>% 
+    mutate(coef = psi,
+         ci_low = lcl_psi,
+         ci_high = ucl_psi) %>%
+  mutate(type = "emerging_pfas") %>%
+  dplyr::select(type, everything()) %>%
+  mutate(coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3)) %>%
+  dplyr::select(parameter, type, coef_ci, everything())%>%
+  mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~
+                           "Sig.(FDR < 0.05)",
+                          p_value < 0.05 ~ "Sig.(p value < 0.05)", 
+                         p_value >= 0.05 ~ "Not Sig."))
+
+# Bind results for bar plot
+res <- res_legacy %>% 
+  dplyr::select(parameter:adjusted_pval) %>% 
+  bind_rows(res_emerging %>% 
+              dplyr::select(parameter:adjusted_pval)) 
+res <- res %>% mutate(sig = case_when((p_value < 0.05 & adjusted_pval < 0.05) ~ "Sig.(FDR < 0.05)", p_value < 0.05 ~ "Sig.(p value < 0.05)", TRUE ~ "Not Sig."))
+
+res$outcome_type <- "categorical"
+
+# Transform coefficients and confidence intervals to OR for categorical results
+transform_to_or <- function(df) {
+  df %>%
+    mutate(
+      coef = exp(psi),
+      ci_low = exp(lcl_psi),
+      ci_high = exp(ucl_psi)
+    )
+}
+
+res <- transform_to_or(res)
+
+#res$feature <- factor(res$feature, levels=levels(res_df$feature))
+
+# Rename 'feature' column in res (cirrhosis results) to match var_name in res_df
+colnames(res)[colnames(res) == "feature"] <- "var_name"
+
+res$type <- factor(res$type, levels = c("legacy_pfas", "emerging_pfas"), labels = c("Long-chain", "Short-chain"))
+
+# Combine both datasets (res_df + cirrhosis results)
+res_mixture_combined <- bind_rows(res_df, res)
+
+
+# Save as a single CSV file
+write_csv(res_mixture_combined, fs::path(dir_result, "res_mixture_analysis_0227.csv"))
+
+# Print confirmation message
+message("Combined mixture and cirrhosis analysis results saved as res_mixture_analysis_0227.csv")
+
+
+```
+
+# ISEE 2025 (2nd paper)
+```{r}
+library(dplyr)
+library(tidyr)
+library(epiomics)
+library(jag2)
+library(readr)
+library(fs)
+
+set.seed(1234)
+
+# Define exposure and covariates
+covars <- c("sex", "age_at_enrollment", "source")
+con_end <- c("log_trig", "log_ast")
+con_end1 <- c("trig_flags", "ast_cat2", "tg_ast", "tg_ast_alt", "alt_ast")
+
+# Combine PFAS lists
+total_pfas_log2 <- c(legacy_log2, emerging_log2)
+
+# ----- Legacy PFAS -----
+# Continuous
+data_scaled_analysis <- data %>% drop_na(all_of(con_end), all_of(covars))
+res_legacy_cont <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                         expnms = legacy_log2,
+                                         omics = con_end,
+                                         covars = covars,
+                                         family = "gaussian",
+                                         q = 4) %>%
+  mutate(parameter = "q = 4", outcome_type = "continuous")
+
+# Categorical
+data_scaled_analysis <- data %>%
+  drop_na(all_of(con_end1), all_of(covars)) %>%
+  mutate(across(all_of(con_end1), ~ifelse(. == "Norm", 0, 1)))
+res_legacy_cat <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                        expnms = legacy_log2,
+                                        omics = con_end1,
+                                        covars = covars,
+                                        family = "binomial",
+                                        q = 4) %>%
+  mutate(parameter = "q = 4", outcome_type = "categorical")
+
+res_legacy <- bind_rows(res_legacy_cont, res_legacy_cat) %>%
+  mutate(coef = psi,
+         ci_low = lcl_psi,
+         ci_high = ucl_psi,
+         type = "legacy_pfas") %>%
+  mutate(coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3),
+         sig = case_when(
+           p_value < 0.05 & adjusted_pval < 0.05 ~ "Sig.(FDR < 0.05)",
+           p_value < 0.05 ~ "Sig.(p value < 0.05)",
+           TRUE ~ "Not Sig."
+         )) %>%
+  dplyr::select(parameter, type, coef_ci, everything())
+
+# ----- Emerging PFAS -----
+data_scaled_analysis <- data %>% drop_na(all_of(con_end), all_of(covars))
+res_emerging_cont <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                           expnms = emerging_log2,
+                                           omics = con_end,
+                                           covars = covars,
+                                           family = "gaussian",
+                                           q = 4) %>%
+  mutate(parameter = "q = 4", outcome_type = "continuous")
+
+data_scaled_analysis <- data %>%
+  drop_na(all_of(con_end1), all_of(covars)) %>%
+  mutate(across(all_of(con_end1), ~ifelse(. == "Norm", 0, 1)))
+res_emerging_cat <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                          expnms = emerging_log2,
+                                          omics = con_end1,
+                                          covars = covars,
+                                          family = "binomial",
+                                          q = 4) %>%
+  mutate(parameter = "q = 4", outcome_type = "categorical")
+
+res_emerging <- bind_rows(res_emerging_cont, res_emerging_cat) %>%
+  mutate(coef = psi,
+         ci_low = lcl_psi,
+         ci_high = ucl_psi,
+         type = "emerging_pfas") %>%
+  mutate(coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3),
+         sig = case_when(
+           p_value < 0.05 & adjusted_pval < 0.05 ~ "Sig.(FDR < 0.05)",
+           p_value < 0.05 ~ "Sig.(p value < 0.05)",
+           TRUE ~ "Not Sig."
+         )) %>%
+  dplyr::select(parameter, type, coef_ci, everything())
+
+# ----- Total PFAS -----
+data_scaled_analysis <- data %>% drop_na(all_of(con_end), all_of(covars))
+res_total_cont <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                        expnms = total_pfas_log2,
+                                        omics = con_end,
+                                        covars = covars,
+                                        family = "gaussian",
+                                        q = 4) %>%
+  mutate(parameter = "q = 4", outcome_type = "continuous")
+
+data_scaled_analysis <- data %>%
+  drop_na(all_of(con_end1), all_of(covars)) %>%
+  mutate(across(all_of(con_end1), ~ifelse(. == "Norm", 0, 1)))
+res_total_cat <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                       expnms = total_pfas_log2,
+                                       omics = con_end1,
+                                       covars = covars,
+                                       family = "binomial",
+                                       q = 4) %>%
+  mutate(parameter = "q = 4", outcome_type = "categorical")
+
+res_total <- bind_rows(res_total_cont, res_total_cat) %>%
+  mutate(coef = psi,
+         ci_low = lcl_psi,
+         ci_high = ucl_psi,
+         type = "total_pfas") %>%
+  mutate(coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3),
+         sig = case_when(
+           p_value < 0.05 & adjusted_pval < 0.05 ~ "Sig.(FDR < 0.05)",
+           p_value < 0.05 ~ "Sig.(p value < 0.05)",
+           TRUE ~ "Not Sig."
+         )) %>%
+  dplyr::select(parameter, type, coef_ci, everything())
+
+# ----- Combine all results -----
+res_all <- bind_rows(res_legacy, res_emerging, res_total)
+
+# ----- Format for plotting -----
+res_all$type <- factor(res_all$type,
+                       levels = c("legacy_pfas", "emerging_pfas", "total_pfas"),
+                       labels = c("Long-chain", "Short-chain", "Total"))
+
+# Transform categorical outcomes to OR
+res_categorical <- res_all %>%
+  filter(feature %in% con_end1) %>%
+  mutate(coef = exp(psi),
+         ci_low = exp(lcl_psi),
+         ci_high = exp(ucl_psi))
+
+# Continuous outcomes stay in beta scale
+res_continuous <- res_all %>%
+  filter(feature %in% con_end) %>%
+  mutate(coef = psi,
+         ci_low = lcl_psi,
+         ci_high = ucl_psi)
+
+# Combine final table
+res_df <- bind_rows(res_categorical, res_continuous)
+
+# Save results
+write_csv(res_df, fs::path(dir_result, "res_mixture_analysis_ISEE_total_combined.csv"))
+
+```
+
+# stratified by obesity status
+```{r}
+data_obese <- data %>% filter(obesity_status == "Obesity")
+data_nonobese <- data %>% filter(obesity_status == "Non-obesity")
+
+run_owas_analysis <- function(data_input, label_group) {
+  # Continuous outcomes
+  data_scaled_analysis <- data_input %>% 
+    drop_na(all_of(con_end), all_of(covars)) 
+  
+  res_legacy_cont <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                           expnms = legacy_log2,
+                                           omics = con_end,
+                                           covars = covars,
+                                           family = "gaussian",
+                                           q = 4) %>%
+    mutate(parameter = "q = 4")
+
+  res_emerging_cont <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                             expnms = emerging_log2,
+                                             omics = con_end,
+                                             covars = covars,
+                                             family = "gaussian",
+                                             q = 4) %>%
+    mutate(parameter = "q = 4")
+
+  # Categorical outcomes
+  data_scaled_analysis <- data_input %>% 
+    drop_na(all_of(con_end1), all_of(covars)) %>%
+    mutate(across(all_of(con_end1), ~ifelse(. == "Norm", 0, 1)))
+  
+  res_legacy_cat <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                          expnms = legacy_log2,
+                                          omics = con_end1,
+                                          covars = covars,
+                                          family = "binomial",
+                                          q = 4) %>%
+    mutate(parameter = "q = 4")
+
+  res_emerging_cat <- epiomics::owas_qgcomp(data_scaled_analysis,
+                                            expnms = emerging_log2,
+                                            omics = con_end1,
+                                            covars = covars,
+                                            family = "binomial",
+                                            q = 4) %>%
+    mutate(parameter = "q = 4")
+
+  # Format legacy results
+  res_legacy <- bind_rows(
+    res_legacy_cont %>% mutate(outcome_type = "continuous"),
+    res_legacy_cat %>% mutate(outcome_type = "categorical")
+  ) %>%
+    mutate(
+      coef = psi,
+      ci_low = lcl_psi,
+      ci_high = ucl_psi,
+      type = "legacy_pfas",
+      group = label_group,
+      coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3),
+      sig = case_when(
+        (p_value < 0.05 & adjusted_pval < 0.05) ~ "Sig.(FDR < 0.05)",
+        p_value < 0.05 ~ "Sig.(p value < 0.05)", 
+        TRUE ~ "Not Sig."
+      )
+    ) %>%
+    dplyr::select(parameter, type, group, coef_ci, everything())
+
+  # Format emerging results
+  res_emerging <- bind_rows(
+    res_emerging_cont %>% mutate(outcome_type = "continuous"),
+    res_emerging_cat %>% mutate(outcome_type = "categorical")
+  ) %>%
+    mutate(
+      coef = psi,
+      ci_low = lcl_psi,
+      ci_high = ucl_psi,
+      type = "emerging_pfas",
+      group = label_group,
+      coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3),
+      sig = case_when(
+        (p_value < 0.05 & adjusted_pval < 0.05) ~ "Sig.(FDR < 0.05)",
+        p_value < 0.05 ~ "Sig.(p value < 0.05)", 
+        TRUE ~ "Not Sig."
+      )
+    ) %>%
+    dplyr::select(parameter, type, group, coef_ci, everything())
+
+  # Return both
+  return(list(
+    legacy = res_legacy,
+    emerging = res_emerging
+  ))
+}
+
+# Run stratified analyses
+res_obese <- run_owas_analysis(data %>% filter(obesity_status == "Obesity"), "Obesity")
+res_nonobese <- run_owas_analysis(data %>% filter(obesity_status == "Non-obesity"), "Non-obesity")
+
+# Combine results
+res_combined <- bind_rows(
+  res_obese$legacy,
+  res_obese$emerging,
+  res_nonobese$legacy,
+  res_nonobese$emerging
+)
+
+# Split into categorical and continuous
+res_cat <- res_combined %>% filter(outcome_type == "categorical")
+res_cont <- res_combined %>% filter(outcome_type == "continuous")
+
+# Optional: apply exponentiation for ORs
+res_cat <- res_cat %>%
+  mutate(coef = exp(coef), ci_low = exp(ci_low), ci_high = exp(ci_high))
+
+desired_order <- c(
+  "parameter", "type", "group", "coef_ci", "feature",
+  "psi", "lcl_psi", "ucl_psi", "p_value", "test_statistic", "adjusted_pval", "threshold",
+  "coef_pf_hx_s_log2", "coef_pfda_log2", "coef_pfna_log2", "coef_pfos_log2",
+  "coef_pfoa_log2", "coef_pf_un_a_log2", "coef_pf_hp_s_log2", "coef_pf_do_a_log2",
+  "coef_pfbs_log2", "coef_pf_pe_a_log2", "coef_pf_pe_s_log2", "coef_pf_hp_a_log2",
+  "covariates", "outcome_type", "coef", "ci_low", "ci_high", "sig"
+)
+
+res_cat <- dplyr::select(res_cat, any_of(desired_order), everything())
+res_cont <- dplyr::select(res_cont, any_of(desired_order), everything())
+
+res_combined <- bind_rows(res_cat, res_cont)
+
+writexl::write_xlsx(
+  res_combined
+  ,
+  path = fs::path(dir_result, "res_mixture_analysis_ISEE_stratified_obesity.xlsx")
+)
+```
+
+```{r}
+# all pfas list
+all_pfas <- c(legacy_log2, emerging_log2)
+
+run_owas_allpfas <- function(data_input, label_group) {
+  # Continuous outcomes
+  data_scaled_cont <- data_input %>% 
+    drop_na(all_of(con_end), all_of(covars))
+
+  res_cont <- epiomics::owas_qgcomp(
+    data_scaled_cont,
+    expnms = all_pfas,
+    omics = con_end,
+    covars = covars,
+    family = "gaussian",
+    q = 4
+  ) %>%
+    mutate(parameter = "q = 4")  # Add column before select()
+
+  # Categorical outcomes
+  data_scaled_cat <- data_input %>% 
+    drop_na(all_of(con_end1), all_of(covars)) %>%
+    mutate(across(all_of(con_end1), ~ifelse(. == "Norm", 0, 1)))
+
+  res_cat <- epiomics::owas_qgcomp(
+    data_scaled_cat,
+    expnms = all_pfas,
+    omics = con_end1,
+    covars = covars,
+    family = "binomial",
+    q = 4
+  ) %>%
+    mutate(parameter = "q = 4")
+
+  # Combine and format
+ res_combined <- bind_rows(
+  res_cont %>% mutate(outcome_type = "continuous"),
+  res_cat %>% mutate(outcome_type = "categorical")
+) %>%
+  mutate(
+    coef = psi,
+    ci_low = lcl_psi,
+    ci_high = ucl_psi,
+    type = "all_pfas",
+    group = label_group,
+    coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3),
+    sig = case_when(
+      (p_value < 0.05 & adjusted_pval < 0.05) ~ "Sig.(FDR < 0.05)",
+      p_value < 0.05 ~ "Sig.(p value < 0.05)",
+      TRUE ~ "Not Sig."
+    )
+  ) %>%
+  dplyr::select(parameter, type, group, coef_ci, dplyr::everything())
+
+  return(res_combined)
+}
+
+# Subset data by obesity status
+data_obese <- data %>% filter(obesity_status == "Obesity")
+data_nonobese <- data %>% filter(obesity_status == "Non-obesity")
+
+# Run analysis
+res_obese_allpfas <- run_owas_allpfas(data_obese, "Obesity")
+res_nonobese_allpfas <- run_owas_allpfas(data_nonobese, "Non-obesity")
+
+# Combine both strata
+res_all_stratified <- bind_rows(res_obese_allpfas, res_nonobese_allpfas)
+
+# Separate categorical and continuous outcomes
+res_cat <- res_all_stratified %>%
+  filter(outcome_type == "categorical") %>%
+  mutate(
+    coef = exp(coef),
+    ci_low = exp(ci_low),
+    ci_high = exp(ci_high)
+  )
+
+res_cont <- res_all_stratified %>% filter(outcome_type == "continuous")
+
+res_combined <- bind_rows(res_cat, res_cont)
+
+
+writexl::write_xlsx(res_combined,
+  path = fs::path(dir_result, "res_allPFAS_OWAS_stratified_by_obesity.xlsx")
+)
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+library(writexl)
+library(fs)
+
+# File paths
+file1 <- fs::path(dir_result, "res_allPFAS_OWAS_stratified_by_obesity.xlsx")
+file2 <- fs::path(dir_result, "res_mixture_analysis_ISEE_stratified_obesity.xlsx")
+
+# Read the first file (assuming one sheet or "All Combined" if named)
+df1 <- read_excel(file1)  # or specify `sheet = "All Combined"`
+
+# Read the second file
+df2 <- read_excel(file2)  # or specify `sheet = "All Combined"`
+
+# Combine by matching columns (ignore column order differences)
+res_combined <- bind_rows(df1, df2)
+
+# Optional: remove exact duplicates
+res_combined <- distinct(res_combined)
+
+# Save combined file
+writexl::write_xlsx(
+  res_combined,
+  path = fs::path(dir_result, "res_mixture_analysis_ISEE_stratified_obesity_combined.xlsx")
+)
+
+```
+
+#Interaction effect
+```{r}
+# Quantize PFAS variables
+data <- data %>%
+  mutate(across(all_of(emerging_log2), ~ntile(., 4), .names = "{.col}_q")) %>%
+  mutate(short_chain_mixture_q = rowMeans(across(ends_with("_q"))))
+
+data <- data %>%
+  mutate(
+    alt_ast_bin = ifelse(alt_ast == "High", 1, 0),
+    obesity_status_bin = ifelse(obesity_status == "Obesity", 1, 0),
+    mixture_obesity_interaction = short_chain_mixture_q * obesity_status_bin
+  )
+
+model_obesity_interaction <- glm(
+  alt_ast_bin ~ short_chain_mixture_q + obesity_status_bin + mixture_obesity_interaction +
+    sex + age_at_enrollment + source,
+  data = data,
+  family = binomial()
+)
+
+summary(model_obesity_interaction)
+tidy(model_obesity_interaction, conf.int = TRUE) %>%
+  writexl::write_xlsx(fs::path(dir_result,"interaction_model_shortchain_obese_alt_ast.xlsx"))
+
+# bmi
+data <- data %>%
+  mutate(
+    mixture_bmi_interaction = short_chain_mixture_q * slm1_bmi
+  )
+
+model_bmi_interaction <- glm(
+  alt_ast_bin ~ short_chain_mixture_q + slm1_bmi + mixture_bmi_interaction +
+    sex + age_at_enrollment + source,
+  data = data,
+  family = binomial()
+)
+
+summary(model_bmi_interaction)
+
+tidy(model_bmi_interaction, conf.int = TRUE) %>%
+  writexl::write_xlsx(fs::path(dir_result,"interaction_model_shortchain_bmi_alt_ast.xlsx"))
+
+```
+
+#No mediation association
+```{r}
+# Load required packages
+library(dplyr)
+library(writexl)
+library(epiomics)
+library(jag2)
+library(fs)
+
+# Define covariates
+covars <- c("sex", "age_at_enrollment", "source")
+
+# Prepare data
+data_med <- data %>%
+  mutate(
+    obesity_status_bin = ifelse(obesity_status == "Obesity", 1, 0),
+    alt_ast_bin = ifelse(alt_ast == "High", 1, 0)
+  ) %>%
+  drop_na(all_of(emerging_log2), obesity_status_bin, alt_ast_bin, all_of(covars))
+
+# Step 1: Mixture → Obesity (mediator model)
+res_mediator <- epiomics::owas_qgcomp(
+  df = data_med,
+  expnms = emerging_log2,
+  omics = "obesity_status_bin",
+  covars = covars,
+  family = "binomial",
+  q = 4
+) %>%
+  mutate(step = "Mixture → Obesity", outcome = "obesity_status_bin")
+
+# Step 2: Mixture + Obesity → ALT/AST (outcome model)
+res_outcome <- epiomics::owas_qgcomp(
+  df = data_med,
+  expnms = emerging_log2,
+  omics = "alt_ast_bin",
+  covars = c("obesity_status_bin", covars),
+  family = "binomial",
+  q = 4
+) %>%
+  mutate(step = "Mixture + Obesity → ALT/AST", outcome = "alt_ast_bin")
+
+# Step 3: Obesity → ALT/AST (only) using glm()
+model_glm <- glm(
+  alt_ast_bin ~ obesity_status_bin + sex + age_at_enrollment + source,
+  data = data_med,
+  family = binomial()
+)
+
+res_glm <- summary(model_glm)$coefficients
+
+# Create formatted result for obesity_status_bin only
+res_obesity_df <- tibble::tibble(
+  feature = rownames(res_glm),
+  psi = res_glm[, 1],
+  se = res_glm[, 2],
+  test_statistic = res_glm[, 3],
+  p_value = res_glm[, 4]
+) %>%
+  filter(feature == "obesity_status_bin") %>%
+  mutate(
+    lcl_psi = psi - 1.96 * se,
+    ucl_psi = psi + 1.96 * se,
+    adjusted_pval = p.adjust(p_value, method = "fdr"),
+    step = "Obesity only → ALT/AST",
+    outcome = "alt_ast_bin",
+    coef = psi,
+    ci_low = lcl_psi,
+    ci_high = ucl_psi,
+    coef_ci = jag2::effest_ci(psi, lcl_psi, ucl_psi, n.digits = 3),
+    sig = case_when(
+      p_value < 0.05 & adjusted_pval < 0.05 ~ "Sig.(FDR < 0.05)",
+      p_value < 0.05 ~ "Sig.(p value < 0.05)",
+      TRUE ~ "Not Sig."
+    )
+  )
+
+# Step 4: Combine all results safely
+res_mediation_emerging <- bind_rows(
+  as.data.frame(res_mediator),
+  as.data.frame(res_outcome),
+  as.data.frame(res_obesity_df)
+)
+
+# Step 5: Clean up and finalize
+res_mediation_emerging <- res_mediation_emerging %>%
+  mutate(
+    coef = psi,
+    ci_low = lcl_psi,
+    ci_high = ucl_psi,
+    coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3),
+    sig = case_when(
+      p_value < 0.05 & adjusted_pval < 0.05 ~ "Sig.(FDR < 0.05)",
+      p_value < 0.05 ~ "Sig.(p value < 0.05)",
+      TRUE ~ "Not Sig."
+    )
+  ) %>%
+  dplyr::select(step, outcome, coef, ci_low, ci_high, coef_ci, p_value, adjusted_pval, sig, dplyr::everything())
+
+# Step 6: Export
+writexl::write_xlsx(
+  res_mediation_emerging,
+  fs::path(dir_result, "res_mediation_emergingPFAS_altast.xlsx")
+)
+
+# bmi
+# Load required packages
+library(dplyr)
+library(writexl)
+library(epiomics)
+library(jag2)
+library(fs)
+
+# Define covariates
+covars <- c("sex", "age_at_enrollment", "source")
+
+# Step 1: Prepare data
+data_med <- data %>%
+  mutate(alt_ast_bin = ifelse(alt_ast == "High", 1, 0)) %>%
+  drop_na(all_of(emerging_log2), slm1_bmi, alt_ast_bin, all_of(covars))
+
+# Step 2: Mixture → BMI (continuous mediator)
+res_mediator <- epiomics::owas_qgcomp(
+  df = data_med,
+  expnms = emerging_log2,
+  omics = "slm1_bmi",
+  covars = covars,
+  family = "gaussian",
+  q = 4
+) %>%
+  mutate(step = "Mixture → BMI", outcome = "slm1_bmi")
+
+# Step 3: Mixture + BMI → ALT/AST
+res_outcome <- epiomics::owas_qgcomp(
+  df = data_med,
+  expnms = emerging_log2,
+  omics = "alt_ast_bin",
+  covars = c("slm1_bmi", covars),
+  family = "binomial",
+  q = 4
+) %>%
+  mutate(step = "Mixture + BMI → ALT/AST", outcome = "alt_ast_bin")
+
+# Step 4: BMI → ALT/AST using glm (optional)
+model_bmi_glm <- glm(
+  alt_ast_bin ~ slm1_bmi + sex + age_at_enrollment + source,
+  data = data_med,
+  family = binomial()
+)
+
+# Extract glm BMI-only result
+res_bmi_glm <- summary(model_bmi_glm)$coefficients
+
+res_bmi_only <- tibble::tibble(
+  feature = rownames(res_bmi_glm),
+  psi = res_bmi_glm[, 1],
+  se = res_bmi_glm[, 2],
+  test_statistic = res_bmi_glm[, 3],
+  p_value = res_bmi_glm[, 4]
+) %>%
+  filter(feature == "slm1_bmi") %>%
+  mutate(
+    lcl_psi = psi - 1.96 * se,
+    ucl_psi = psi + 1.96 * se,
+    adjusted_pval = p.adjust(p_value, method = "fdr"),
+    step = "BMI only → ALT/AST",
+    outcome = "alt_ast_bin",
+    coef = psi,
+    ci_low = lcl_psi,
+    ci_high = ucl_psi,
+    coef_ci = jag2::effest_ci(psi, lcl_psi, ucl_psi, n.digits = 3),
+    sig = case_when(
+      p_value < 0.05 & adjusted_pval < 0.05 ~ "Sig.(FDR < 0.05)",
+      p_value < 0.05 ~ "Sig.(p value < 0.05)",
+      TRUE ~ "Not Sig."
+    )
+  )
+
+# Step 5: Combine results
+res_mediation_bmi <- bind_rows(
+  as.data.frame(res_mediator),
+  as.data.frame(res_outcome),
+  as.data.frame(res_bmi_only)
+) %>%
+  mutate(
+    coef = psi,
+    ci_low = lcl_psi,
+    ci_high = ucl_psi,
+    coef_ci = jag2::effest_ci(coef, ci_low, ci_high, n.digits = 3),
+    sig = case_when(
+      p_value < 0.05 & adjusted_pval < 0.05 ~ "Sig.(FDR < 0.05)",
+      p_value < 0.05 ~ "Sig.(p value < 0.05)",
+      TRUE ~ "Not Sig."
+    )
+  ) %>%
+  dplyr::select(step, outcome, coef, ci_low, ci_high, coef_ci, p_value, adjusted_pval, sig, dplyr::everything())
+
+# Step 6: Export
+writexl::write_xlsx(
+  res_mediation_bmi,
+  fs::path(dir_result, "res_mediation_emergingPFAS_altast_via_BMI.xlsx")
+)
+
+```
+
+

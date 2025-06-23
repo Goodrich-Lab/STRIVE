@@ -1,0 +1,478 @@
+---
+title: 'STRIVE'
+subtitle: "Descriptive Stats"
+author: "Hongxu Wang"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+options(knitr.table.format = "html")
+options(scipen = 999) 
+knitr::opts_chunk$set(echo = TRUE)
+
+source(fs::path(here::here("!libraries.R")))
+source(fs::path(here::here("!directories.R")))
+source(fs::path(here::here("!load_cleaned_data.R")))
+```
+
+# Check percentage of NA for each PFAS
+```{r percentage of NA, warning=FALSE}
+##scaled 14 PFAS after imputation as well as normalization
+data_pfas1 <- data %>% dplyr::select(contains("log2"))
+
+correlation_matrix1 <- data_pfas1 %>%
+  select_if(~sum(!is.na(.)) > 0) %>%
+  cor(use = "pairwise.complete.obs")
+
+correlation_long1 <- melt(correlation_matrix1)
+
+correlation_long1 <- correlation_long1 %>%
+  mutate(keep = as.numeric(Var1) >= as.numeric(Var2)) %>%
+  filter(keep) %>%
+  dplyr::select(-keep)
+
+label_mapping <- c("pf_hx_a_log2" = "PFHxA", 
+                   "pfba_log2" = "PFBA",
+                   "pf_pe_s_log2" = "PFPeS",
+                   "pf_do_a_log2" = "PFDoA",
+                   "pf_hp_s_log2" = "PFHpS", 
+                   "pf_un_a_log2" = "PFUnA", 
+                   "pf_pe_a_log2" = "PFPeA",
+                   "pfoa_log2" = "PFOA",
+                   "pfbs_log2" = "PFBS",
+                   "pf_hp_a_log2" = "PFHpA",
+                   "pfos_log2"="PFOS",
+                   "pfna_log2"="PFNA",
+                   "pfda_log2"="PFDA",
+                   "pf_hx_s_log2"="PFHxS"
+                   )
+
+correlation_long1 <- correlation_long1 %>%
+  mutate(
+    var1 = recode(Var1, !!!label_mapping),
+    var2 = recode(Var2, !!!label_mapping)
+  )%>%
+  distinct(var1, var2, .keep_all = TRUE) %>% 
+  dplyr::select(-var1, -var2)
+
+correlation_matrix <- correlation_long1 %>%
+  pivot_wider(names_from = Var1, values_from = value, id_cols = Var2)
+
+library(knitr)
+rounded_correlation_matrix <- correlation_matrix %>%
+  mutate(across(where(is.numeric), round, 3))
+kable(rounded_correlation_matrix, caption = "Correlation Table")
+writexl::write_xlsx(rounded_correlation_matrix, "correlation_table.xlsx")
+
+heatmap_plot1 <- ggplot(data = correlation_long1, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1, 1), space = "Lab", 
+                       name="Correlation") +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 8, hjust = 1)) +
+  coord_fixed() +
+  scale_x_discrete(labels=label_mapping)+
+  scale_y_discrete(labels=label_mapping)+
+  labs(x = "PFAS", y = "PFAS", title = "Correlation Heatmap of log2-transformed PFAS Variables")
+
+print(heatmap_plot1)
+
+```
+
+# Descriptive stats of PFAS in overall participants
+```{r descriptive stats for pfas, warning=FALSE}
+data_pfas<- data %>% dplyr::select(pfas_name_analysis)
+
+## Stats----
+(pfas_stats <- data_pfas %>% 
+  pivot_longer(cols = pfas_name_analysis) %>%
+  drop_na() %>%
+  group_by(name) %>%
+  dplyr::summarise(
+    geometric_mean = if(all(value >=0)) jag2::fungm(value) else NA,
+    sd = if(all(value >=0)) jag2::fungsd(value) else NA,
+    min = min(value),
+    max = max(value),
+    percentile_25 = jag2::qntle_fxn(value, 0.25),
+    percentile_50 = jag2::qntle_fxn(value, 0.5),
+    percentile_75 = jag2::qntle_fxn(value, 0.75),
+    percentile_90 = jag2::qntle_fxn(value, 0.90)
+  ) %>% 
+  ungroup())
+
+writexl::write_xlsx(pfas_stats, "pfas_stats.xlsx")
+
+# 2nd paper by triglyceride status
+# Count number of observations per trig_flags
+trig_flags_counts <- data %>%
+  count(trig_flags) %>%
+  rename(n_obs = n)
+
+print(trig_flags_counts)
+
+# PFAS stats by trig_flags
+data_pfas <- data %>% 
+  dplyr::select(all_of(c("trig_flags", pfas_name_analysis)))
+
+(pfas_stats <- data_pfas %>% 
+  pivot_longer(cols = all_of(pfas_name_analysis)) %>%
+  drop_na() %>%
+  group_by(trig_flags, name) %>%
+  dplyr::summarise(
+    n = n(),
+    geometric_mean = if(all(value >= 0)) jag2::fungm(value) else NA,
+    sd = if(all(value >= 0)) jag2::fungsd(value) else NA,
+    min = min(value),
+    max = max(value),
+    percentile_25 = jag2::qntle_fxn(value, 0.25),
+    percentile_50 = jag2::qntle_fxn(value, 0.5),
+    percentile_75 = jag2::qntle_fxn(value, 0.75),
+    percentile_90 = jag2::qntle_fxn(value, 0.90),
+    .groups = "drop"
+  ))
+
+
+writexl::write_xlsx(pfas_stats,fs::path(dir_result, "pfas_stats_by_trig_flags.xlsx"))
+
+```
+
+# Descriptive stats 
+```{r stats,warning=FALSE, cache=FALSE}
+(df <- data %>%
+  filter(!(strive_id == "1210073"&trig_mg_dl == 257))%>% # There is one participant having triglyciride concentration 257 and 256. In the old data it was 256. so only keep the 256 one
+  mutate(alt_ind  = case_when(is.na(alt_cat2)~"Missing ALT", 
+                              alt_cat2 == "Norm" ~ "Normal", 
+                              alt_cat2 == "High" ~ "Elevated ALT"))%>%
+  dplyr::select(alt_ind,age_at_enrollment, sex, slm1_bmi, trig_mg_dl, alt_u_l, case_control, 
+                race_final_label, race_eth_label, rural, source,
+                smoking, sq_drink_alcohol,sq_average_drink_per_day, sq_self_hep_b, 
+                sq_self_hep_c, s1_meds_pain_reliever_take, sq_water_well, 
+                sq_water_tap_unfiltered, sq_water_house_filtration, 
+                sq_water_faucet_filter, sq_water_charcoal_filter,
+                sq_water_bottled, sq_water_none, sq_water_other_type,
+                sq_water_dont_know) %>%
+  tbl_summary(by = alt_ind,
+              type = all_continuous() ~ "continuous2",
+              statistic = list(
+                               all_continuous() ~ c("{mean} ± {sd}"),
+                               all_categorical() ~ "{n} ({p}%)"),
+                 digits = list( all_continuous()~1,
+                                all_categorical() ~ 1)) %>%
+
+  # add_p(pvalue_fun = ~ style_pvalue(.x, digits = 2)) %>%
+  add_overall() %>%
+  add_n())
+
+df1 <- df %>% as.tibble()%>%
+  dplyr::select("**Characteristic**", "**N**", 
+         "**Elevated ALT**  \nN = 28", 
+         "**Normal**  \nN = 301",
+         "**Missing ALT**  \nN = 49",
+         "**Overall**  \nN = 378")
+
+writexl::write_xlsx(df1, fs::path(dir_result, "Table1. Characteristic of STRIVE cohort_V1.xlsx"))
+```
+
+# correlation between potential confounders and endpoints
+```{r}
+# Create the new variable, defaulting to scaled_sq_drink_alcohol values
+data$drink_combined <- as.character(data$sq_drink_alcohol)
+
+# Replace "Yes, current drinker" with values from scaled_sq_average_drink_per_day
+replace_idx <- data$sq_drink_alcohol == "Yes, current drinker"
+data$drink_combined[replace_idx] <- as.character(data$sq_average_drink_per_day[replace_idx])
+
+data$sex <- factor(data$sex, levels = c("Female", "Male"))  
+data$race_eth_label <- factor(data$race_eth_label, levels=c("NHW", "Hispanic","NHB","NHO","Unknown/Not Reported"))
+data$rural <- factor(data$rural, levels = c("Non-Metro Counties", "Metro Counties","Unknown/Not Reported"))
+data$source <- factor(data$source, levels= c("emory", "duke", "ncsu", "unc"))
+data$smoking <- factor(data$smoking, levels=c("Not at all", "Everyday", "Some days", "Unknow/Not Reported"))
+data$sq_drink_alcohol <- factor(data$sq_drink_alcohol, levels =c("No, never drinker", "No, former drinker (stopped)", "Yes, current drinker", "Unknown/Not Reported"))
+data$sq_average_drink_per_day <- factor(data$sq_average_drink_per_day, levels=c("Less than 1 alcoholic drink per day","1-2 alcoholic drinks per day","3-4 alcoholic drinks per day","Unknown/Not Reported"))
+data$drink_combined <- factor(data$drink_combined, levels=c("No, never drinker", "No, former drinker (stopped)","Less than 1 alcoholic drink per day","1-2 alcoholic drinks per day","3-4 alcoholic drinks per day","Unknown/Not Reported"))
+data$sq_water_well <- factor(data$sq_water_well)
+data$sq_water_tap_unfiltered <- factor(data$sq_water_tap_unfiltered)
+data$sq_water_house_filtration <- factor(data$sq_water_house_filtration)
+data$sq_water_faucet_filter <- factor(data$sq_water_faucet_filter)
+data$sq_water_charcoal_filter <- factor(data$sq_water_charcoal_filter)
+data$sq_water_bottled <- factor(data$sq_water_bottled)
+data$sq_water_none <- factor(data$sq_water_none)
+
+# Remove the two variables from the covariate list
+covar_names_list<-potential_conf
+covar_names_list <- setdiff(covar_names_list, c("sq_drink_alcohol", "sq_average_drink_per_day"))
+
+# Optionally, add the new combined variable if needed
+covar_names_list <- union(covar_names_list, "drink_combined")
+
+# Check the updated list
+print(covar_names_list)
+
+numeric_data <- data %>%
+     dplyr::select(all_of(covar_names_list)) %>%
+     dplyr::select_if(is.numeric)
+
+conti_conf <- names(numeric_data)
+
+extract_model_summary <- function(end, covariate, data) {
+  model <- lm(as.formula(paste(end, "~", covariate)), data = data)
+  summary_model <- summary(model)
+  estimate <- coef(summary_model)[2, 1]
+  se <- coef(summary_model)[2, 2]
+  p_value <- coef(summary_model)[2, 4]
+  r_squared <- summary_model$r.squared
+  return(data.frame(Confounders = covariate, Coeff = estimate, SE = se, P = p_value, Factor = covariate, Endpoint = end, R2 = r_squared))
+}
+#con_end <- c('log_alt','log_ast')
+con_end <- c('log_alt')
+continuous_results <- bind_rows(lapply(con_end, function(end) {
+  bind_rows(lapply(conti_conf, function(cov) extract_model_summary(end, cov, data)))
+}))
+
+print(continuous_results)
+
+extract_model_summary <- function(end, covariate, data) {
+  model <- glm(as.formula(paste(end, "~", covariate)), family = binomial, data = data)
+  summary_model <- summary(model)
+  estimate <- coef(summary_model)[2, 1]
+  se <- coef(summary_model)[2, 2]
+  p_value <- coef(summary_model)[2, 4]
+  r_squared <-1 - summary_model$deviance / summary_model$null.deviance
+  return(data.frame(Confounders = covariate, Coeff = estimate, SE = se, P = p_value, Factor = covariate, Endpoint = end, R2 = r_squared))
+}
+
+cate_conf <- setdiff(covar_names_list, conti_conf)
+
+#con_end1 <- c('alt_cat1','alt_cat2', 'ast_cat1','ast_cat2')
+con_end1 <- c('alt_cat2')
+data_temp <- data %>%
+  mutate(across(all_of(con_end1), ~ ifelse(. == "Normal", 0, 1)))%>%
+  mutate(source = factor(source)) %>%
+  mutate(race_final_label = factor(race_final_label))%>%
+  mutate(sq_drink_alcohol  = factor(sq_drink_alcohol))%>%
+  mutate(sq_average_drink_per_day  = factor(sq_average_drink_per_day))
+
+#data_temp$source <- relevel(data_temp$source, ref = "emory")
+#data_temp$race_final_label <- relevel(data_temp$race_final_label, ref = "White")
+#data_temp$sq_drink_alcohol <- relevel(data_temp$sq_drink_alcohol, ref = "No, never drinker")
+#data_temp$sq_average_drink_per_day <- relevel(data_temp$sq_average_drink_per_day, ref = "Less than 1 alcoholic drink per day")
+
+continuous_results1 <- bind_rows(lapply(con_end1, function(end) {
+  bind_rows(lapply(conti_conf, function(cov) extract_model_summary(end, cov, data_temp)))
+}))
+
+print(continuous_results1)
+
+continuous_results<-rbind(continuous_results, continuous_results1)
+
+fit_model_cat <- function(end, covariate, data) {
+  model <- lm(as.formula(paste(end, "~", covariate)), data = data)
+  summary_model <- summary(model)
+  coefficients_df <- as.data.frame(summary_model$coefficients)
+  r_squared <- summary_model$r.squared
+  coefficients_df <- coefficients_df[-1, ] 
+  results <- data.frame()
+
+  for (i in 1:nrow(coefficients_df)) {
+    current_result <- data.frame(
+      Confounders = covariate, 
+      Coeff = coefficients_df[i, "Estimate"], 
+      SE = coefficients_df[i, "Std. Error"],
+      P = coefficients_df[i, "Pr(>|t|)"],
+      Factor = rownames(coefficients_df)[i],
+      Endpoint = end,
+      R2 = r_squared
+    )
+    results <- rbind(results, current_result)
+  }
+  
+  return(results)
+}
+
+cate_conf <- c(cate_conf, 'source')
+
+categorical_results <- bind_rows(lapply(con_end, function(end) {
+  bind_rows(lapply(cate_conf, function(cov) fit_model_cat(end, cov, data)))
+}))
+
+fit_model_cat <- function(end, covariate, data) {
+  model <- glm(as.formula(paste(end, "~", covariate)), family = binomial, data = data)
+  summary_model <- summary(model)
+  coefficients_df <- as.data.frame(summary_model$coefficients)
+  
+  if (nrow(coefficients_df) < 2) {
+    return(data.frame())
+  }
+  
+  pseudo_r_squared <- 1 - summary_model$deviance / summary_model$null.deviance
+  coefficients_df <- coefficients_df[-1, ] 
+
+  results <- data.frame()
+
+  for (i in 1:nrow(coefficients_df)) {
+    current_result <- data.frame(
+      Confounders = covariate, 
+      Coeff = coefficients_df[i, "Estimate"], 
+      SE = coefficients_df[i, "Std. Error"],
+      P = coefficients_df[i, "Pr(>|z|)"],  
+      Factor = rownames(coefficients_df)[i],
+      Endpoint = end,
+      R2 = pseudo_r_squared
+    )
+    results <- rbind(results, current_result)
+  }
+  
+  return(results)
+}
+
+categorical_results1 <- bind_rows(lapply(con_end1, function(end) {
+  bind_rows(lapply(cate_conf, function(cov) fit_model_cat(end, cov, data_temp)))
+}))
+
+print(categorical_results1)
+
+categorical_results<-rbind(categorical_results, categorical_results1)
+
+all_results <- rbind(continuous_results, categorical_results)
+
+adjust_pvalues <- function(df) {
+  df %>%
+    mutate(Adjusted_P = p.adjust(P, method = "fdr"))
+}
+
+all_results_adjusted <- all_results %>%
+  group_by(Endpoint) %>%
+  group_modify(~ adjust_pvalues(.x)) %>%
+  ungroup()
+
+all_results_adjusted <- all_results_adjusted %>%
+  mutate(significance = ifelse(Adjusted_P < 0.05, "*", ""))
+
+all_results_adjusted <- all_results_adjusted %>%
+  #mutate(Endpoint = factor(Endpoint)) %>%
+  arrange(Endpoint) %>%
+  dplyr::select(Endpoint, Confounders, Factor, Coeff, SE, P, Adjusted_P, R2, significance)
+
+fancy_table <- flextable(all_results_adjusted) %>%
+  set_table_properties(width = 0.8, layout = "autofit") %>%
+  set_header_labels(values = c(
+    Confounders = "Potential confounders", 
+    Coeff = "Coefficients", 
+    SE = "SE",
+    P = "P", 
+    Adjusted_P = "Adjusted P", 
+    Factor = "Factors", 
+    Endpoint = "Endpoint",
+    R2 = "R-Squared",
+    significance = "AdP<0.05"
+  )) %>%
+  fontsize(size = 10, part = "all")
+
+print(fancy_table)
+
+doc <- read_docx()
+doc <- body_add_flextable(doc, value = fancy_table)
+print(doc, target = "Coefficients between potential confounders and categorical ast or alt adding adjP and R2.docx")
+
+
+
+```
+
+```{r}
+##for ISEE abstract developed by BJ (Feb 18,2025)
+df <- data %>%
+  filter(!(strive_id == "1210073" & trig_mg_dl == 257)) %>% 
+  mutate(alt_ast = case_when(
+      alt_cat2 == "High" & ast_cat2 == "High" ~ "High",
+      TRUE ~ "Norm")) %>%
+  mutate(tg = case_when(is.na(trig_flags)~"Missing TG", 
+                              trig_flags == "Norm" ~ "Normal TG", 
+                              trig_flags == "High" ~ "High TG")) %>%
+  dplyr::select(
+    tg, alt_ast, age_at_enrollment, sex, slm1_bmi, obesity_status, trig_mg_dl, alt_u_l, ast_u_l,  
+    race_final_label, race_eth_label, rural, source,
+    smoking, sq_drink_alcohol, sq_average_drink_per_day, sq_self_hep_b, 
+    sq_self_hep_c, s1_meds_pain_reliever_take, sq_water_well, 
+    sq_water_tap_unfiltered, sq_water_house_filtration, 
+    sq_water_faucet_filter, sq_water_charcoal_filter,
+    sq_water_bottled, sq_water_none, sq_water_other_type,
+    sq_water_dont_know
+  ) %>%
+  tbl_summary(by = tg,  
+              type = all_continuous() ~ "continuous2",
+              statistic = list(
+                all_continuous() ~ c("{mean} ± {sd}"),
+                all_categorical() ~ "{n} ({p}%)"
+              ),
+              digits = list( all_continuous() ~ 1,
+                             all_categorical() ~ 1)) %>%
+  add_overall() %>%
+  add_n()
+
+df2 <- df %>% as.tibble() %>%
+  dplyr::select("**Characteristic**", "**N**", 
+         "**High TG**  \nN = 117", 
+         "**Normal TG**  \nN = 238",
+         "**Missing TG**  \nN = 23",
+         "**Overall**  \nN = 378")
+
+
+writexl::write_xlsx(df2, fs::path(dir_result, "Table1. ISEE table1.xlsx"))
+
+#pvalues
+
+retemp_data <- data %>% mutate(alt_ast=ifelse(alt_cat2=="High" &ast_cat2=="High", "High", "Norm")) %>% dplyr::filter(!is.na(trig_flags)) %>%
+  dplyr::select(
+    trig_flags, alt_ast, age_at_enrollment, sex, slm1_bmi, obesity_status, trig_mg_dl, alt_u_l,ast_u_l,ast_cat2, alt_cat2,  
+    race_final_label, race_eth_label, rural, source,
+    smoking, sq_drink_alcohol, sq_average_drink_per_day, sq_self_hep_b, 
+    sq_self_hep_c, s1_meds_pain_reliever_take, sq_water_well, 
+    sq_water_tap_unfiltered, sq_water_house_filtration, 
+    sq_water_faucet_filter, sq_water_charcoal_filter,
+    sq_water_bottled, sq_water_none, sq_water_other_type,
+    sq_water_dont_know
+  )
+
+continuous_vars <- c('age_at_enrollment', 'slm1_bmi', 'trig_mg_dl', 'alt_u_l', 'ast_u_l')
+remaining_vars <- c('alt_ast','ast_cat2', 'alt_cat2', 'obesity_status','sex', 'race_final_label', 'race_eth_label', 'rural', 'source', 'smoking', 'sq_drink_alcohol', 'sq_average_drink_per_day', 'sq_self_hep_b', 'sq_self_hep_c', 's1_meds_pain_reliever_take', 'sq_water_well', 'sq_water_tap_unfiltered', 'sq_water_house_filtration', 'sq_water_faucet_filter', 'sq_water_charcoal_filter', 'sq_water_bottled', 'sq_water_none', 'sq_water_other_type', 'sq_water_dont_know')
+
+get_pvalue <- function(variable) {
+    ttest_result <- t.test(retemp_data[[variable]] ~ retemp_data$trig_flags)
+  return(ttest_result$p.value)
+}
+
+p_values_continuous <- sapply(continuous_vars, get_pvalue)
+
+pval_cont_df <- data.frame(Variable = continuous_vars, P_value = p_values_continuous)
+
+print(pval_cont_df)
+
+#categorical_vars <- union(remaining_vars,c("alt_ast","alt_cat2","ast_cat2"))
+categorical_vars <- remaining_vars
+
+get_chi2_pvalue <- function(variable) {
+  tbl <- table(retemp_data[[variable]], retemp_data$trig_flags)
+
+  chi2_result <- chisq.test(tbl)
+
+  return(chi2_result$p.value)
+}
+
+p_values_categorical <- sapply(categorical_vars, get_chi2_pvalue)
+
+pval_cat_df <- data.frame(Variable = categorical_vars, P_value = p_values_categorical)
+
+print(pval_cat_df)
+
+```
+
